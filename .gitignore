@@ -1,15 +1,29 @@
+# Dependencies
 node_modules/
 .pnpm-store/
+
+# Build output
 dist/
 *.tsbuildinfo
+
+# Env files
 .env
 .env.local
 .env.*.local
 !.env.example
+
+# Data (user PDFs and built indexes)
 data/
+
+# Logs
 *.log
+
+# Editor / OS
 .DS_Store
 .idea/
+.vscode/
 Thumbs.db
+
+# Test artifacts
 coverage/
 .vitest-cache/
