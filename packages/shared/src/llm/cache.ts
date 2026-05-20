@@ -13,14 +13,14 @@ export interface CachedHandle {
   expireTime: string;
 }
 
-export async function tryCreateContextCache(
-  opts: CreateCacheOpts,
-): Promise<CachedHandle | null> {
+export async function tryCreateContextCache(opts: CreateCacheOpts): Promise<CachedHandle | null> {
   try {
     const mgr = new GoogleAICacheManager(opts.apiKey);
     const created = await mgr.create({
       model: `models/${opts.model}`,
-      ...(opts.systemInstruction ? { systemInstruction: { role: 'system', parts: [{ text: opts.systemInstruction }] } } : {}),
+      ...(opts.systemInstruction
+        ? { systemInstruction: { role: 'system', parts: [{ text: opts.systemInstruction }] } }
+        : {}),
       contents: opts.contents,
       ttlSeconds: opts.ttlSeconds,
     } as never);

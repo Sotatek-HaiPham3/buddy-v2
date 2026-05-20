@@ -35,10 +35,7 @@ export function createRealGemini(opts: RealGeminiOpts): GeminiClient {
         responseSchema: callOpts.responseSchema as never,
       };
     }
-    if (
-      callOpts?.temperature !== undefined ||
-      callOpts?.maxOutputTokens !== undefined
-    ) {
+    if (callOpts?.temperature !== undefined || callOpts?.maxOutputTokens !== undefined) {
       sdkOpts.generationConfig = {
         ...(sdkOpts.generationConfig ?? {}),
         ...(callOpts.temperature !== undefined ? { temperature: callOpts.temperature } : {}),
@@ -55,7 +52,9 @@ export function createRealGemini(opts: RealGeminiOpts): GeminiClient {
     callOpts?: GenerateOpts,
   ): Promise<GenerateResult> => {
     const model = getModel(callOpts);
-    const r = await model.generateContent({ contents: [{ role: 'user', parts: toSdkParts(parts) }] });
+    const r = await model.generateContent({
+      contents: [{ role: 'user', parts: toSdkParts(parts) }],
+    });
     const text = r.response.text();
     const usage = r.response.usageMetadata;
     return {

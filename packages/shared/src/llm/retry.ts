@@ -1,5 +1,11 @@
 const RETRYABLE_STATUSES = new Set([408, 429, 500, 502, 503, 504]);
-const RETRYABLE_CODES = new Set(['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'EAI_AGAIN', 'ECONNREFUSED']);
+const RETRYABLE_CODES = new Set([
+  'ECONNRESET',
+  'ETIMEDOUT',
+  'ENOTFOUND',
+  'EAI_AGAIN',
+  'ECONNREFUSED',
+]);
 
 export function isRetryable(err: unknown): boolean {
   if (err === null || err === undefined) return false;

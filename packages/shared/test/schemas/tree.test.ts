@@ -66,9 +66,7 @@ describe('docOutputSchema', () => {
       doc_id: 'doc_x',
       doc_name: 'annual-report.pdf',
       doc_description: '2023 financial report',
-      structure: [
-        { title: 'Exec Summary', start_index: 1, end_index: 14, node_id: 'node_0' },
-      ],
+      structure: [{ title: 'Exec Summary', start_index: 1, end_index: 14, node_id: 'node_0' }],
     };
     const out = docOutputSchema.parse(doc);
     expect(out.doc_name).toBe('annual-report.pdf');

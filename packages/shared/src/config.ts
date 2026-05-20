@@ -1,9 +1,7 @@
 import 'dotenv/config';
 import { z } from 'zod';
 
-const boolStr = z
-  .union([z.literal('true'), z.literal('false')])
-  .transform((v) => v === 'true');
+const boolStr = z.union([z.literal('true'), z.literal('false')]).transform((v) => v === 'true');
 
 const intStr = (defaultValue: number) =>
   z
@@ -21,10 +19,26 @@ export const configSchema = z.object({
   MAX_CONCURRENT_LLM: intStr(10),
   MAX_PAGES_PER_NODE: intStr(20),
   MAX_RETRIES: intStr(3),
-  ADD_SUMMARIES: z.string().optional().default('true').transform((v) => v === 'true'),
-  IMAGES_ENABLED: z.string().optional().default('true').transform((v) => v === 'true'),
-  TABLES_ENABLED: z.string().optional().default('true').transform((v) => v === 'true'),
-  HIERARCHICAL_PROCESSING: z.string().optional().default('true').transform((v) => v === 'true'),
+  ADD_SUMMARIES: z
+    .string()
+    .optional()
+    .default('true')
+    .transform((v) => v === 'true'),
+  IMAGES_ENABLED: z
+    .string()
+    .optional()
+    .default('true')
+    .transform((v) => v === 'true'),
+  TABLES_ENABLED: z
+    .string()
+    .optional()
+    .default('true')
+    .transform((v) => v === 'true'),
+  HIERARCHICAL_PROCESSING: z
+    .string()
+    .optional()
+    .default('true')
+    .transform((v) => v === 'true'),
   SUBGROUP_TOKEN_SIZE: intStr(7000),
   MAX_RETRIEVALS_PER_MASTER: intStr(3),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
@@ -50,7 +64,9 @@ export interface Config {
   logLevel: 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
 }
 
-export function loadConfig(env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env): Config {
+export function loadConfig(
+  env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,
+): Config {
   const parsed = configSchema.parse(env);
   return {
     geminiApiKey: parsed.GEMINI_API_KEY,

@@ -46,8 +46,6 @@ describe('paths', () => {
   });
 
   it('resolveLogsDir adds logs', () => {
-    expect(resolveLogsDir(DATA, 'finance')).toBe(
-      path.join(DATA, 'finance', '.index', 'logs'),
-    );
+    expect(resolveLogsDir(DATA, 'finance')).toBe(path.join(DATA, 'finance', '.index', 'logs'));
   });
 });
