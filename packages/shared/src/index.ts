@@ -8,5 +8,6 @@ export * from './llm/stub.js';
 export * from './llm/types.js';
 export * from './logger.js';
 export * from './paths.js';
+export * from './pdf.js';
 export * from './schemas/api.js';
 export * from './schemas/tree.js';
