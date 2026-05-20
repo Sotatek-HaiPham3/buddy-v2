@@ -25,7 +25,7 @@ export interface TreeNode {
   tables: TableRef[];
 }
 
-export const treeNodeSchema: z.ZodType<TreeNode> = z.lazy(() =>
+const _treeNodeSchema: z.ZodType<unknown> = z.lazy(() =>
   z
     .object({
       title: z.string(),
@@ -33,7 +33,7 @@ export const treeNodeSchema: z.ZodType<TreeNode> = z.lazy(() =>
       end_index: z.number().int().positive(),
       node_id: z.string(),
       summary: z.string().optional(),
-      nodes: z.array(treeNodeSchema).default([]),
+      nodes: z.array(_treeNodeSchema).default([]),
       images: z.array(imageRefSchema).default([]),
       tables: z.array(tableRefSchema).default([]),
     })
@@ -41,6 +41,8 @@ export const treeNodeSchema: z.ZodType<TreeNode> = z.lazy(() =>
       message: 'end_index must be >= start_index',
     }),
 );
+
+export const treeNodeSchema = _treeNodeSchema as z.ZodType<TreeNode>;
 
 export const docOutputSchema = z.object({
   doc_id: z.string(),
