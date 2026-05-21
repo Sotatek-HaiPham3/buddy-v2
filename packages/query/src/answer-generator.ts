@@ -28,6 +28,9 @@ export async function* generateAnswer(opts: {
     doc: r.doc_name,
     node_ids: [r.node_id],
     pages: [r.page_range[0], r.page_range[1]].filter((v, i, arr) => arr.indexOf(v) === i),
+    ...(r.doc_page_range !== undefined
+      ? { doc_pages: [r.doc_page_range[0], r.doc_page_range[1]].filter((v, i, arr) => arr.indexOf(v) === i) }
+      : {}),
   }));
   yield { type: 'citations', citations };
 }

@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { createStubGemini, hashPrompt } from '@buddy/shared';
+import type { Citation } from '@buddy/shared';
 import { answerPrompt } from '../src/prompts/answer.js';
 import { generateAnswer } from '../src/answer-generator.js';
+import type { RetrievedNode } from '../src/types.js';
 
 describe('generateAnswer', () => {
   it('streams tokens and emits citations', async () => {
@@ -57,5 +59,56 @@ describe('generateAnswer', () => {
 
     expect(events.at(0)).toEqual({ type: 'token', delta: 'Revenue' });
     expect(logs.some((l) => l.msg === 'LLM usage')).toBe(true);
+  });
+
+  it('emits doc_pages in citation when doc_page_range is present', async () => {
+    const retrieved: RetrievedNode[] = [{
+      doc_id: 'd1',
+      doc_name: 'Chapter01.pdf',
+      node_id: 'n1',
+      title: 'OXEN',
+      page_range: [1, 1],
+      doc_page_range: [5, 5],
+      text: 'Oxen are castrated adult male bovine animals.',
+      image_captions: [],
+      tables: [],
+    }];
+    const prompt = answerPrompt('What are oxen?', retrieved, []);
+    const responses = new Map();
+    responses.set(hashPrompt([prompt]), { text: 'Oxen are draft animals.' });
+    const gemini = createStubGemini({ responses });
+    const chunks: unknown[] = [];
+    for await (const chunk of generateAnswer({ gemini, query: 'What are oxen?', retrieved, history: [] })) {
+      chunks.push(chunk);
+    }
+    const citEvent = chunks.find((c: unknown) => (c as { type: string }).type === 'citations') as
+      { type: 'citations'; citations: Citation[] } | undefined;
+    expect(citEvent).toBeDefined();
+    expect(citEvent!.citations[0].pages).toEqual([1]);
+    expect(citEvent!.citations[0].doc_pages).toEqual([5]);
+  });
+
+  it('omits doc_pages from citation when doc_page_range is absent', async () => {
+    const retrieved: RetrievedNode[] = [{
+      doc_id: 'd1',
+      doc_name: 'Chapter01.pdf',
+      node_id: 'n1',
+      title: 'OXEN',
+      page_range: [1, 1],
+      text: 'Oxen are draft animals.',
+      image_captions: [],
+      tables: [],
+    }];
+    const prompt = answerPrompt('What are oxen?', retrieved, []);
+    const responses = new Map();
+    responses.set(hashPrompt([prompt]), { text: 'Oxen are draft animals.' });
+    const gemini = createStubGemini({ responses });
+    const chunks: unknown[] = [];
+    for await (const chunk of generateAnswer({ gemini, query: 'What are oxen?', retrieved, history: [] })) {
+      chunks.push(chunk);
+    }
+    const citEvent = chunks.find((c: unknown) => (c as { type: string }).type === 'citations') as
+      { type: 'citations'; citations: Citation[] } | undefined;
+    expect(citEvent!.citations[0].doc_pages).toBeUndefined();
   });
 });
