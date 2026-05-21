@@ -12,5 +12,8 @@ export async function processTocNoPageNumbers(toc: FlatTocEntry[], pages: RawPag
   const r = await opts.gemini.generate([physicalMappingPrompt(toc, tagged)], { maxOutputTokens: 8192 });
   const parsed = physicalMappingResponseSchema.parse(extractJson(r.text));
   const byStruct = new Map(parsed.map(p => [p.structure, parsePhysicalIndexTag(p.physical_index)]));
-  return toc.map(e => ({ ...e, physical_index: byStruct.get(e.structure) }));
+  return toc.map(e => {
+    const physical_index = byStruct.get(e.structure);
+    return physical_index !== undefined ? { ...e, physical_index } : { ...e };
+  });
 }
