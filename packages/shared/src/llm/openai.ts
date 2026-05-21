@@ -11,13 +11,28 @@ interface RealOpenAIOpts {
   defaultModel: string;
 }
 
-function partsToText(parts: ContentPart[]): string {
-  return parts
-    .map((p) => {
-      if (typeof p === 'string') return p;
-      throw new Error('OpenAI fallback currently supports text-only prompts');
-    })
-    .join('\n');
+type OaiContent =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: { url: string } };
+
+function partsToContent(parts: ContentPart[]): OaiContent[] {
+  return parts.map((p) =>
+    typeof p === 'string'
+      ? { type: 'text' as const, text: p }
+      : {
+          type: 'image_url' as const,
+          image_url: { url: `data:${p.inlineData.mimeType};base64,${p.inlineData.data}` },
+        },
+  );
+}
+
+function buildMessages(parts: ContentPart[], callOpts?: GenerateOpts) {
+  return [
+    ...(callOpts?.systemInstruction
+      ? [{ role: 'system', content: callOpts.systemInstruction }]
+      : []),
+    { role: 'user', content: partsToContent(parts) },
+  ];
 }
 
 export function createRealOpenAI(opts: RealOpenAIOpts): GeminiClient {
@@ -35,12 +50,7 @@ export function createRealOpenAI(opts: RealOpenAIOpts): GeminiClient {
       body: JSON.stringify({
         model,
         temperature: callOpts?.temperature,
-        messages: [
-          ...(callOpts?.systemInstruction
-            ? [{ role: 'system', content: callOpts.systemInstruction }]
-            : []),
-          { role: 'user', content: partsToText(parts) },
-        ],
+        messages: buildMessages(parts, callOpts),
         ...(callOpts?.maxOutputTokens !== undefined
           ? { max_completion_tokens: callOpts.maxOutputTokens }
           : {}),
@@ -73,8 +83,48 @@ export function createRealOpenAI(opts: RealOpenAIOpts): GeminiClient {
     callOpts?: GenerateOpts,
   ): AsyncIterable<GenerateStreamChunk> {
     const model = callOpts?.model ?? opts.defaultModel;
-    const out = await generate(parts, callOpts);
-    if (out.text) yield { delta: out.text };
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${opts.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        stream: true,
+        messages: buildMessages(parts, callOpts),
+        ...(callOpts?.maxOutputTokens !== undefined
+          ? { max_completion_tokens: callOpts.maxOutputTokens }
+          : {}),
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(`OpenAI stream failed: ${response.status} ${await response.text()}`);
+    }
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop() ?? '';
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') return;
+        try {
+          const chunk = JSON.parse(data) as {
+            choices?: Array<{ delta?: { content?: string | null } }>;
+          };
+          const delta = chunk.choices?.[0]?.delta?.content;
+          if (delta) yield { delta };
+        } catch {
+          // skip malformed SSE chunk
+        }
+      }
+    }
   }
 
   return { generate, generateStream };
