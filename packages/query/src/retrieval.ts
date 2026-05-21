@@ -71,6 +71,9 @@ export async function retrieveNodes(opts: {
         node_id: node.node_id,
         title: node.title,
         page_range: [node.start_index, node.end_index],
+        ...(node.doc_page_start !== undefined && node.doc_page_end !== undefined
+          ? { doc_page_range: [node.doc_page_start, node.doc_page_end] as [number, number] }
+          : {}),
         text: pages.join('\n'),
         image_captions: imageCaptions,
         tables,

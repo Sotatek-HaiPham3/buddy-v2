@@ -26,6 +26,7 @@ export const citationSchema = z.object({
   doc: z.string(),
   node_ids: z.array(z.string()),
   pages: z.array(z.number().int().positive()),
+  doc_pages: z.array(z.number().int().positive()).optional(),
 });
 export type Citation = z.infer<typeof citationSchema>;
 

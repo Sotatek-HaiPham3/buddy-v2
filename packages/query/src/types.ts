@@ -18,6 +18,7 @@ export interface RetrievedNode {
   node_id: string;
   title: string;
   page_range: [number, number];
+  doc_page_range?: [number, number];
   text: string;
   image_captions: { page: number; caption: string }[];
   tables: { page: number; schema: string; preview: string }[];
