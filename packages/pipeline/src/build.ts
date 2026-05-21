@@ -1,13 +1,20 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {
-  createLlmClient, createLlmPool, createLogger, docId as makeDocId, runId as makeRunId,
+  createLlmClient, createLlmPool, createLogger, runId as makeRunId,
   resolveDocCacheDir, resolveDocTreePath, resolveIndexDir, resolveLogsDir,
   resolveDocImagesDir, resolveDocTablesDir,
   type Config, type DocOutput, type GeminiClient, type LlmPool, type Logger,
 } from '@buddy/shared';
 import { runPipeline } from './orchestrator.js';
 import { buildOptsFromConfig, type BuildOpts, type Ctx } from './types.js';
+
+function stableDocId(pdfPath: string): string {
+  return path.basename(pdfPath, path.extname(pdfPath))
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
 
 interface BuildDocArgs {
   cfg: Config;
@@ -21,7 +28,7 @@ interface BuildDocArgs {
 
 export async function buildDoc(args: BuildDocArgs): Promise<DocOutput> {
   const docName = path.basename(args.pdfPath);
-  const docId = makeDocId();
+  const docId = stableDocId(args.pdfPath);
   const runId = makeRunId();
   const cacheDir = resolveDocCacheDir(args.cfg.dataDir, args.topic, docId);
   const indexDir = resolveIndexDir(args.cfg.dataDir, args.topic);
