@@ -101,7 +101,8 @@ export function createRealOpenAI(opts: RealOpenAIOpts): GeminiClient {
     if (!response.ok) {
       throw new Error(`OpenAI stream failed: ${response.status} ${await response.text()}`);
     }
-    const reader = response.body!.getReader();
+    if (!response.body) throw new Error('OpenAI stream failed: response body is null');
+    const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buf = '';
     while (true) {
