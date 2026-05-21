@@ -6,7 +6,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
-  "scripts": { "build": "tsup", "typecheck": "tsc --noEmit" },
+  "scripts": { "build": "tsup && tsc --project tsconfig.build.json --emitDeclarationOnly --declaration --declarationMap", "typecheck": "tsc --noEmit" },
   "dependencies": {
     "@buddy/shared": "workspace:*",
     "gpt-tokenizer": "^2.5.0",
