@@ -9,5 +9,5 @@ interface Opts { gemini: GeminiClient; }
 export async function transformToc(tocText: string, opts: Opts): Promise<FlatTocEntry[]> {
   const r = await opts.gemini.generate([tocTransformPrompt(tocText)], { maxOutputTokens: 8192 });
   const parsed = tocTransformResponseSchema.parse(extractJson(r.text));
-  return parsed.table_of_contents.map(e => ({ structure: e.structure, title: e.title, page: e.page }));
+  return parsed.table_of_contents.map(e => ({ structure: e.structure, title: e.title, page: e.page ?? undefined }));
 }
