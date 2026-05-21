@@ -29,5 +29,10 @@
     "typescript": "^5.6.0",
     "vitest": "^2.1.0",
     "@vitest/coverage-v8": "^2.1.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3"
+    ]
   }
 }
