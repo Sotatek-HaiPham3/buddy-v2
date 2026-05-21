@@ -1,4 +1,6 @@
-import 'dotenv/config';
+import path from 'node:path';
+import dotenv from 'dotenv';
+dotenv.config({ path: path.resolve(process.env.INIT_CWD ?? process.cwd(), '.env') });
 import { z } from 'zod';
 
 const boolStr = z.union([z.literal('true'), z.literal('false')]).transform((v) => v === 'true');
