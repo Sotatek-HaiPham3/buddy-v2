@@ -26,4 +26,36 @@ describe('generateAnswer', () => {
     expect(events.at(0)?.type).toBe('token');
     expect(events.at(-1)?.type).toBe('citations');
   });
+
+  it('logs usage when stream chunk includes token usage', async () => {
+    const retrieved = [
+      {
+        doc_id: 'd1',
+        doc_name: 'a.pdf',
+        node_id: 'n1',
+        title: 'Q3',
+        page_range: [1, 1] as [number, number],
+        text: 'Revenue grew 10%',
+        image_captions: [],
+        tables: [],
+      },
+    ];
+    const logs: Array<{ msg: string; obj: unknown }> = [];
+    const logger = {
+      debug: (obj: unknown, msg: string) => logs.push({ msg, obj }),
+    } as never;
+    const gemini = {
+      async *generateStream() {
+        yield { delta: 'Revenue', cachedTokens: 300, promptTokens: 900 };
+      },
+    } as never;
+
+    const events = [];
+    for await (const e of generateAnswer({ gemini, query: 'how?', retrieved, history: [], logger })) {
+      events.push(e);
+    }
+
+    expect(events.at(0)).toEqual({ type: 'token', delta: 'Revenue' });
+    expect(logs.some((l) => l.msg === 'LLM usage')).toBe(true);
+  });
 });

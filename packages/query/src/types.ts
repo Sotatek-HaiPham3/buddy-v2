@@ -1,4 +1,4 @@
-import type { Citation, GeminiClient, ReasoningTrace } from '@buddy/shared';
+import type { Citation, GeminiClient, Logger, ReasoningTrace } from '@buddy/shared';
 
 export interface HistoryTurn {
   role: 'user' | 'assistant';
@@ -31,6 +31,7 @@ export interface AnswerOpts {
   gemini: GeminiClient;
   pdfPathFor: (docName: string) => string;
   topicCache?: TopicCache;
+  logger?: Logger;
 }
 
 import type { DocOutput } from '@buddy/shared';

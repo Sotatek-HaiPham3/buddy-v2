@@ -1,4 +1,4 @@
-import type { Citation, GeminiClient } from '@buddy/shared';
+import type { Citation, GeminiClient, Logger } from '@buddy/shared';
 import { answerPrompt } from './prompts/answer.js';
 import type { HistoryTurn, RetrievedNode } from './types.js';
 
@@ -7,9 +7,21 @@ export async function* generateAnswer(opts: {
   query: string;
   retrieved: RetrievedNode[];
   history: HistoryTurn[];
+  logger?: Logger;
 }): AsyncIterable<{ type: 'token'; delta: string } | { type: 'citations'; citations: Citation[] }> {
   const prompt = answerPrompt(opts.query, opts.retrieved, opts.history);
   for await (const chunk of opts.gemini.generateStream([prompt], { temperature: 0.2 })) {
+    const usage = chunk as { cachedTokens?: number; promptTokens?: number };
+    if (opts.logger && (usage.cachedTokens !== undefined || usage.promptTokens !== undefined)) {
+      opts.logger.debug(
+        {
+          step: 'answer-generator',
+          cachedTokens: usage.cachedTokens,
+          promptTokens: usage.promptTokens,
+        },
+        'LLM usage',
+      );
+    }
     yield { type: 'token', delta: chunk.delta };
   }
   const citations: Citation[] = opts.retrieved.map((r) => ({

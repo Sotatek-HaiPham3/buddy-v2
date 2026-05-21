@@ -19,4 +19,29 @@ describe('selectDocs', () => {
     const out = await selectDocs({ gemini, docs: [doc, { ...doc, doc_id: 'd2' }], query: 'revenue?', historySummary: '' });
     expect(out.doc_ids).toEqual(['d1']);
   });
+
+  it('logs cached token usage when present', async () => {
+    const prompt = docSelectorPrompt([doc, { ...doc, doc_id: 'd2' }], 'revenue?', '');
+    const responses = new Map();
+    responses.set(hashPrompt([prompt]), {
+      text: '{"reasoning":"fit","doc_ids":["d1"]}',
+      cachedTokens: 512,
+      promptTokens: 800,
+    });
+    const gemini = createStubGemini({ responses });
+    const logs: Array<{ msg: string; obj: unknown }> = [];
+    const logger = {
+      debug: (obj: unknown, msg: string) => logs.push({ msg, obj }),
+    } as never;
+
+    await selectDocs({
+      gemini,
+      docs: [doc, { ...doc, doc_id: 'd2' }],
+      query: 'revenue?',
+      historySummary: '',
+      logger,
+    });
+
+    expect(logs.some((l) => l.msg === 'LLM usage')).toBe(true);
+  });
 });

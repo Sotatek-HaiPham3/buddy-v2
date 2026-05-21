@@ -17,6 +17,7 @@ export async function* answer(opts: AnswerOpts): AsyncIterable<AnswerEvent> {
       docs,
       query: opts.query,
       historySummary,
+      ...(opts.logger ? { logger: opts.logger } : {}),
     });
     const selectedDocs =
       docSelection.doc_ids.length > 0
@@ -27,6 +28,7 @@ export async function* answer(opts: AnswerOpts): AsyncIterable<AnswerEvent> {
       docs: selectedDocs,
       query: opts.query,
       historySummary,
+      ...(opts.logger ? { logger: opts.logger } : {}),
     });
     const nodeIds = tree.selections.flatMap((s) => s.node_ids);
     yield {
@@ -54,6 +56,7 @@ export async function* answer(opts: AnswerOpts): AsyncIterable<AnswerEvent> {
       query: opts.query,
       retrieved,
       history: opts.history,
+      ...(opts.logger ? { logger: opts.logger } : {}),
     })) {
       yield event;
     }
