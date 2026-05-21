@@ -101,6 +101,23 @@ function reconstructPhysicalIndices(
     const phys = entry.physical_index;
     if (phys === undefined) return entry;
 
+    const logi = entry.page;
+
+    // Case 0: both physical and logical are present, and map says a different physical —
+    // the LLM emitted in-range but wrong physical; trust the map.
+    if (logi !== undefined && printedToPhysical.has(logi)) {
+      const truePhys = printedToPhysical.get(logi)!;
+      if (truePhys !== phys) {
+        console.warn(
+          `[process-no-toc] physical_index disagreed with logical→physical map for "${entry.title}": ` +
+          `LLM emitted physical=${phys} for logical=${logi}, map says logical=${logi} → physical=${truePhys}; reassigning`,
+        );
+        return { ...entry, physical_index: truePhys };
+      }
+      // phys agrees with map — keep as-is
+      return entry;
+    }
+
     // Case A: already in valid range — keep as-is
     if (phys >= 1 && phys <= pageCount) return entry;
 

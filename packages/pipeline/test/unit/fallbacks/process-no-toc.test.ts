@@ -100,6 +100,82 @@ describe('processNoToc', () => {
     expect(out[0].physical_index).toBe(99);
   });
 
+  it('reassigns physical_index when it disagrees with map[logical] (in-range LLM output)', async () => {
+    // 4-page chunk, printed numbers 55-58.
+    const pages: RawPage[] = [
+      { pageNumber: 1, text: '55\nCHAPTER 12\nIntro', tokenCount: 5 },
+      { pageNumber: 2, text: '56\nRAUWOLFIA SERPENTINA\nDetails', tokenCount: 5 },
+      { pageNumber: 3, text: '57\nAGARWOOD CHIPS\nDetails', tokenCount: 5 },
+      { pageNumber: 4, text: '58\nEUCHEUMA SPINOSUM\nDetails', tokenCount: 5 },
+    ];
+    const tagged = tagPages(pages);
+    // LLM emits in-range BUT wrong physical (e.g. 4 for everything).
+    const responses = new Map([
+      [hashPrompt([noTocHeadingsPrompt(tagged)]), {
+        text: JSON.stringify([
+          ['1.1', 'CHAPTER 12', 55, 4],
+          ['1.2', 'RAUWOLFIA', 56, 4],
+          ['1.3', 'AGARWOOD', 57, 4],
+          ['1.4', 'EUCHEUMA', 58, 4],
+        ]),
+      }],
+    ]);
+    const out = await processNoToc(pages, {
+      gemini: createStubGemini({ responses }), pool: async <T,>(fn: () => Promise<T>) => fn(),
+      chunkTokens: 100_000, hierarchical: false,
+      subgroupTokenSize: 100_000, maxRetrievalsPerMaster: 1,
+    });
+    expect(out[0]?.physical_index).toBe(1);   // reassigned via map[55]
+    expect(out[1]?.physical_index).toBe(2);   // map[56]
+    expect(out[2]?.physical_index).toBe(3);   // map[57]
+    expect(out[3]?.physical_index).toBe(4);   // map[58]
+    expect(out[0]?.page).toBe(55);            // logical preserved
+  });
+
+  it('does NOT reassign physical_index when it agrees with map[logical]', async () => {
+    const pages: RawPage[] = [
+      { pageNumber: 1, text: '55\nCHAPTER 12', tokenCount: 3 },
+      { pageNumber: 2, text: '56\nRAUWOLFIA', tokenCount: 3 },
+    ];
+    const tagged = tagPages(pages);
+    const responses = new Map([
+      [hashPrompt([noTocHeadingsPrompt(tagged)]), {
+        text: JSON.stringify([
+          ['1.1', 'CHAPTER 12', 55, 1],
+          ['1.2', 'RAUWOLFIA', 56, 2],
+        ]),
+      }],
+    ]);
+    const out = await processNoToc(pages, {
+      gemini: createStubGemini({ responses }), pool: async <T,>(fn: () => Promise<T>) => fn(),
+      chunkTokens: 100_000, hierarchical: false,
+      subgroupTokenSize: 100_000, maxRetrievalsPerMaster: 1,
+    });
+    expect(out[0]?.physical_index).toBe(1);
+    expect(out[1]?.physical_index).toBe(2);
+  });
+
+  it('keeps existing out-of-range reconstruction working (no logical present case)', async () => {
+    const pages: RawPage[] = [
+      { pageNumber: 1, text: '24\nCHIPPING POTATOES', tokenCount: 3 },
+    ];
+    const tagged = tagPages(pages);
+    const responses = new Map([
+      [hashPrompt([noTocHeadingsPrompt(tagged)]), {
+        // logical missing (null), physical out of [1,1] — existing Case B path
+        text: JSON.stringify([
+          ['1.1', 'CHIPPING POTATOES', null, 24],
+        ]),
+      }],
+    ]);
+    const out = await processNoToc(pages, {
+      gemini: createStubGemini({ responses }), pool: async <T,>(fn: () => Promise<T>) => fn(),
+      chunkTokens: 100_000, hierarchical: false,
+      subgroupTokenSize: 100_000, maxRetrievalsPerMaster: 1,
+    });
+    expect(out[0]?.physical_index).toBe(1);   // reconstructed via existing Case B path
+  });
+
   it('handles 3-tuple legacy LLM output unchanged (no reconstruction needed)', async () => {
     const pages: RawPage[] = [{ pageNumber: 1, text: 'page 1', tokenCount: 3 }];
     const tagged = tagPages(pages);
