@@ -15,9 +15,11 @@ export function buildCli(): Command {
     .option('--force', 'Ignore caches and rebuild')
     .option('--no-summaries', 'Disable summary generation')
     .option('--no-hierarchical', 'Disable hierarchical agents')
+    .option('--no-images', 'Disable image extraction')
+    .option('--no-tables', 'Disable table extraction')
     .action(async (opts: {
       all?: boolean; topic?: string; doc?: string; force?: boolean;
-      summaries?: boolean; hierarchical?: boolean;
+      summaries?: boolean; hierarchical?: boolean; images?: boolean; tables?: boolean;
     }) => {
       const cfg = loadConfig();
       const logger = createLogger({ level: cfg.logLevel });
@@ -25,6 +27,8 @@ export function buildCli(): Command {
         force: !!opts.force,
         addSummaries: opts.summaries !== false && cfg.addSummaries,
         hierarchicalProcessing: opts.hierarchical !== false && cfg.hierarchicalProcessing,
+        imagesEnabled: opts.images !== false && cfg.imagesEnabled,
+        tablesEnabled: opts.tables !== false && cfg.tablesEnabled,
       };
 
       if (opts.doc) {
