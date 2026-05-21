@@ -37,7 +37,14 @@ export async function buildDoc(args: BuildDocArgs): Promise<DocOutput> {
   const logger = (args.logger ?? createLogger({ level: args.cfg.logLevel }))
     .child({ runId, topic: args.topic, docId, docName });
 
-  const gemini = args.gemini ?? createRealGemini({ apiKey: args.cfg.geminiApiKey, defaultModel: args.cfg.geminiModel });
+  const gemini =
+    args.gemini ??
+    (() => {
+      if (!args.cfg.geminiApiKey) {
+        throw new Error('GEMINI_API_KEY is required for pipeline builds');
+      }
+      return createRealGemini({ apiKey: args.cfg.geminiApiKey, defaultModel: args.cfg.geminiModel });
+    })();
   const pool = args.pool ?? createLlmPool(args.cfg.maxConcurrentLlm);
 
   const ctx: Ctx = {

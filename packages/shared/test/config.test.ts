@@ -32,17 +32,20 @@ describe('config', () => {
   it('uses defaults for missing optional vars', () => {
     const cfg = loadConfig({ GEMINI_API_KEY: 'k' });
     expect(cfg.geminiModel).toBe('gemini-2.5-flash-lite');
+    expect(cfg.openaiModel).toBe('gpt-5.4-nano');
     expect(cfg.port).toBe(3000);
     expect(cfg.dataDir).toBe('./data');
     expect(cfg.imagesEnabled).toBe(true);
   });
 
-  it('throws on missing GEMINI_API_KEY', () => {
-    expect(() => loadConfig({})).toThrow(/GEMINI_API_KEY/);
+  it('allows missing provider keys at config parse time', () => {
+    const cfg = loadConfig({});
+    expect(cfg.geminiApiKey).toBeUndefined();
+    expect(cfg.openaiApiKey).toBeUndefined();
   });
 
   it('throws on invalid LOG_LEVEL', () => {
-    expect(() => loadConfig({ GEMINI_API_KEY: 'k', LOG_LEVEL: 'banana' })).toThrow();
+    expect(() => loadConfig({ LOG_LEVEL: 'banana' })).toThrow();
   });
 
   it('configSchema is exported for reuse', () => {

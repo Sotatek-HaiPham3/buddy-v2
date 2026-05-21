@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { serve } from '@hono/node-server';
 import { createTopicCache } from '@buddy/query';
 import { createApp, createPdfCache, conversationsRepo, messagesRepo, openDb, runMigrations } from '@buddy/server';
-import { createLogger, createRealGemini, loadConfig, type Config } from '@buddy/shared';
+import { createLogger, createRealGemini, createRealOpenAI, loadConfig, type Config } from '@buddy/shared';
 
 async function main(): Promise<void> {
   const cfg: Config = loadConfig();
@@ -16,7 +16,25 @@ async function main(): Promise<void> {
     watch: true,
     onChange: (topic: string) => logger.info({ topic }, 'tree cache reloaded'),
   });
-  const gemini = createRealGemini({ apiKey: cfg.geminiApiKey, defaultModel: cfg.geminiModel });
+  const llmClient = (() => {
+    if (cfg.llmProvider === 'gemini') {
+      if (!cfg.geminiApiKey) throw new Error('GEMINI_API_KEY is required when LLM_PROVIDER=gemini');
+      return createRealGemini({ apiKey: cfg.geminiApiKey, defaultModel: cfg.geminiModel });
+    }
+    if (cfg.llmProvider === 'openai') {
+      if (!cfg.openaiApiKey) throw new Error('OPENAI_API_KEY is required when LLM_PROVIDER=openai');
+      return createRealOpenAI({ apiKey: cfg.openaiApiKey, defaultModel: cfg.openaiModel });
+    }
+    if (cfg.geminiApiKey) {
+      logger.info({ provider: 'gemini', model: cfg.geminiModel }, 'using configured LLM provider');
+      return createRealGemini({ apiKey: cfg.geminiApiKey, defaultModel: cfg.geminiModel });
+    }
+    if (cfg.openaiApiKey) {
+      logger.info({ provider: 'openai', model: cfg.openaiModel }, 'using configured LLM provider');
+      return createRealOpenAI({ apiKey: cfg.openaiApiKey, defaultModel: cfg.openaiModel });
+    }
+    throw new Error('No LLM key configured. Set GEMINI_API_KEY or OPENAI_API_KEY.');
+  })();
   const here = path.dirname(fileURLToPath(import.meta.url));
   const webDist = path.resolve(here, '../../../packages/web/dist');
   const app = createApp({
@@ -25,7 +43,7 @@ async function main(): Promise<void> {
     msgs: messagesRepo(db),
     pdfCache: createPdfCache(4),
     topicCache,
-    gemini,
+    gemini: llmClient,
     webDistDir: webDist,
     pdfPathFor: (topic: string, docName: string) => path.join(cfg.dataDir, topic, docName),
   });

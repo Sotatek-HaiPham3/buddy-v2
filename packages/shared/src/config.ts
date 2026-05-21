@@ -11,9 +11,12 @@ const intStr = (defaultValue: number) =>
     .pipe(z.number().int().positive());
 
 export const configSchema = z.object({
-  GEMINI_API_KEY: z.string().min(1, 'GEMINI_API_KEY is required'),
+  LLM_PROVIDER: z.enum(['auto', 'gemini', 'openai']).default('auto'),
+  GEMINI_API_KEY: z.string().min(1).optional(),
   GEMINI_MODEL: z.string().default('gemini-2.5-flash-lite'),
   GEMINI_VISION_MODEL: z.string().default('gemini-2.5-flash-lite'),
+  OPENAI_API_KEY: z.string().min(1).optional(),
+  OPENAI_MODEL: z.string().default('gpt-5.4-nano'),
   PORT: intStr(3000),
   DATA_DIR: z.string().default('./data'),
   MAX_CONCURRENT_LLM: intStr(10),
@@ -47,9 +50,12 @@ export const configSchema = z.object({
 export type RawConfig = z.infer<typeof configSchema>;
 
 export interface Config {
-  geminiApiKey: string;
+  llmProvider: 'auto' | 'gemini' | 'openai';
+  geminiApiKey?: string;
   geminiModel: string;
   geminiVisionModel: string;
+  openaiApiKey?: string;
+  openaiModel: string;
   port: number;
   dataDir: string;
   maxConcurrentLlm: number;
@@ -69,9 +75,10 @@ export function loadConfig(
 ): Config {
   const parsed = configSchema.parse(env);
   return {
-    geminiApiKey: parsed.GEMINI_API_KEY,
+    llmProvider: parsed.LLM_PROVIDER,
     geminiModel: parsed.GEMINI_MODEL,
     geminiVisionModel: parsed.GEMINI_VISION_MODEL,
+    openaiModel: parsed.OPENAI_MODEL,
     port: parsed.PORT,
     dataDir: parsed.DATA_DIR,
     maxConcurrentLlm: parsed.MAX_CONCURRENT_LLM,
@@ -84,5 +91,7 @@ export function loadConfig(
     subgroupTokenSize: parsed.SUBGROUP_TOKEN_SIZE,
     maxRetrievalsPerMaster: parsed.MAX_RETRIEVALS_PER_MASTER,
     logLevel: parsed.LOG_LEVEL,
+    ...(parsed.GEMINI_API_KEY ? { geminiApiKey: parsed.GEMINI_API_KEY } : {}),
+    ...(parsed.OPENAI_API_KEY ? { openaiApiKey: parsed.OPENAI_API_KEY } : {}),
   };
 }

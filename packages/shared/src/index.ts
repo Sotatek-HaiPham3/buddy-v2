@@ -2,6 +2,7 @@ export * from './config.js';
 export * from './ids.js';
 export * from './llm/cache.js';
 export * from './llm/gemini.js';
+export * from './llm/openai.js';
 export * from './llm/pool.js';
 export * from './llm/retry.js';
 export * from './llm/stub.js';
