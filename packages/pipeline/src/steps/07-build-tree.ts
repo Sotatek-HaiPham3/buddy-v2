@@ -2,7 +2,7 @@ import { nodeId } from '@buddy/shared';
 import type { TreeNode } from '@buddy/shared';
 import type { FlatTocEntry } from '../types.js';
 
-interface WorkingNode extends TreeNode { _structure: string; _appearStart: 'yes' | 'no'; _docPage?: number; }
+interface WorkingNode extends TreeNode { _structure: string; _appearStart: 'yes' | 'no'; }
 
 function parentStructure(s: string): string | null {
   const parts = s.split('.');
@@ -13,19 +13,23 @@ export function buildTree(toc: FlatTocEntry[], totalPages: number): TreeNode[] {
   const valid = toc.filter(e => e.physical_index !== undefined);
   const ordered = [...valid].sort((a, b) => a.physical_index! - b.physical_index!);
 
-  const flat: WorkingNode[] = ordered.map(e => ({
-    title: e.title,
-    start_index: e.physical_index!,
-    end_index: 0,
-    node_id: nodeId(),
-    nodes: [],
-    images: [],
-    tables: [],
-    _structure: e.structure,
-    _appearStart: e.appear_start ?? 'yes',
-    _docPage: e.page,
-    doc_page_start: e.page,
-  }));
+  const flat: WorkingNode[] = ordered.map(e => {
+    const node: WorkingNode = {
+      title: e.title,
+      start_index: e.physical_index!,
+      end_index: 0,
+      node_id: nodeId(),
+      nodes: [],
+      images: [],
+      tables: [],
+      _structure: e.structure,
+      _appearStart: e.appear_start ?? 'yes',
+    };
+    if (e.page !== undefined) {
+      node.doc_page_start = e.page;
+    }
+    return node;
+  });
 
   // Assign leaf end_index first, based on the next sibling in flat order.
   // We'll fix parent end_index after building the tree structure.
@@ -34,13 +38,12 @@ export function buildTree(toc: FlatTocEntry[], totalPages: number): TreeNode[] {
     const next = flat[i + 1];
     if (!next) {
       cur.end_index = totalPages;
-      // doc_page_end left undefined for last node (no next sibling)
     } else {
       cur.end_index = next._appearStart === 'no' ? next.start_index : next.start_index - 1;
       if (cur.end_index < cur.start_index) cur.end_index = cur.start_index;
-      if (cur._docPage !== undefined && next._docPage !== undefined) {
-        cur.doc_page_end = next._appearStart === 'no' ? next._docPage : next._docPage - 1;
-        if (cur.doc_page_end < cur._docPage) cur.doc_page_end = cur._docPage;
+      if (cur.doc_page_start !== undefined && next.doc_page_start !== undefined) {
+        cur.doc_page_end = next._appearStart === 'no' ? next.doc_page_start : next.doc_page_start - 1;
+        if (cur.doc_page_end < cur.doc_page_start) cur.doc_page_end = cur.doc_page_start;
       }
     }
   }
@@ -59,14 +62,17 @@ export function buildTree(toc: FlatTocEntry[], totalPages: number): TreeNode[] {
   function propagateEnd(node: WorkingNode): void {
     for (const child of node.nodes) propagateEnd(child as unknown as WorkingNode);
     if (node.nodes.length > 0) {
-      const maxChildEnd = Math.max(...node.nodes.map(c => (c as unknown as WorkingNode).end_index));
-      node.end_index = Math.max(node.end_index, maxChildEnd);
-      const childDocPageEnds = node.nodes
-        .map(c => (c as unknown as WorkingNode).doc_page_end)
-        .filter((v): v is number => v !== undefined);
-      if (childDocPageEnds.length > 0) {
-        node.doc_page_end = Math.max(...childDocPageEnds);
+      let maxEnd = 0;
+      let maxDocPageEnd: number | undefined;
+      for (const c of node.nodes) {
+        const w = c as unknown as WorkingNode;
+        if (w.end_index > maxEnd) maxEnd = w.end_index;
+        if (w.doc_page_end !== undefined && (maxDocPageEnd === undefined || w.doc_page_end > maxDocPageEnd)) {
+          maxDocPageEnd = w.doc_page_end;
+        }
       }
+      node.end_index = Math.max(node.end_index, maxEnd);
+      if (maxDocPageEnd !== undefined) node.doc_page_end = maxDocPageEnd;
     }
   }
   for (const root of roots) propagateEnd(root);
@@ -75,6 +81,6 @@ export function buildTree(toc: FlatTocEntry[], totalPages: number): TreeNode[] {
 }
 
 function stripWorking(n: WorkingNode): TreeNode {
-  const { _structure: _s, _appearStart: _a, _docPage: _dp, ...rest } = n;
+  const { _structure: _s, _appearStart: _a, ...rest } = n;
   return rest;
 }
