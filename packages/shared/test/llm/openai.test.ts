@@ -82,4 +82,35 @@ describe('createRealOpenAI', () => {
     const client = createRealOpenAI({ apiKey: 'x', defaultModel: 'gpt-4o' });
     await expect(client.generate(['hello'])).rejects.toThrow('OpenAI request failed: 400');
   });
+
+  it('generateStream yields token deltas from SSE response', async () => {
+    const sseLines = [
+      'data: {"choices":[{"delta":{"content":"Hello"}}]}',
+      'data: {"choices":[{"delta":{"content":" world"}}]}',
+      'data: [DONE]',
+    ].join('\n') + '\n';
+
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(sseLines, {
+        status: 200,
+        headers: { 'content-type': 'text/event-stream' },
+      }),
+    ) as never;
+
+    const client = createRealOpenAI({ apiKey: 'x', defaultModel: 'gpt-4o' });
+    const chunks: string[] = [];
+    for await (const chunk of client.generateStream(['hi'])) {
+      chunks.push(chunk.delta);
+    }
+    expect(chunks).toEqual(['Hello', ' world']);
+  });
+
+  it('generateStream throws on non-2xx', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response('unauthorized', { status: 401 }),
+    ) as never;
+    const client = createRealOpenAI({ apiKey: 'x', defaultModel: 'gpt-4o' });
+    const gen = client.generateStream(['hi']);
+    await expect(gen.next()).rejects.toThrow('OpenAI stream failed: 401');
+  });
 });
