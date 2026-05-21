@@ -6,30 +6,23 @@ import { tagPages } from '../../../src/page-tag.js';
 import type { RawPage } from '../../../src/types.js';
 
 describe('subgroupAgent', () => {
-  it('returns [title, page] tuples', async () => {
+  it('returns [title] tuples from new prompt contract', async () => {
     const pages: RawPage[] = [{ pageNumber: 5, text: 'x', tokenCount: 0 }];
     const tagged = tagPages(pages);
     const responses = new Map([
-      [hashPrompt([subgroupHeadingsPrompt(tagged)]), { text: '[["Intro", 5], ["Bg", 7]]' }],
+      [hashPrompt([subgroupHeadingsPrompt(tagged)]), { text: '[["Intro"], ["Bg"]]' }],
     ]);
     const out = await subgroupAgent({ pages }, { gemini: createStubGemini({ responses }) });
-    expect(out).toEqual([['Intro', 5], ['Bg', 7]]);
+    expect(out).toEqual([['Intro'], ['Bg']]);
   });
 
-  it('returns [title, logical|null, physical] tuples', async () => {
+  it('coerces legacy tuples to [title]', async () => {
     const pages: RawPage[] = [{ pageNumber: 5, text: 'x', tokenCount: 0 }];
     const tagged = tagPages(pages);
     const responses = new Map([
-      [hashPrompt([subgroupHeadingsPrompt(tagged)]), { text: '[["Intro", 1, 5], ["Bg", null, 7]]' }],
+      [hashPrompt([subgroupHeadingsPrompt(tagged)]), { text: '[["Intro", 5], ["Bg", null, 7]]' }],
     ]);
     const out = await subgroupAgent({ pages }, { gemini: createStubGemini({ responses }) });
-    expect(out).toEqual([['Intro', 1, 5], ['Bg', null, 7]]);
-  });
-
-  it('returns [] on error', async () => {
-    const pages: RawPage[] = [{ pageNumber: 1, text: 'x', tokenCount: 0 }];
-    const gemini = createStubGemini({ responses: new Map() });
-    const out = await subgroupAgent({ pages }, { gemini });
-    expect(out).toEqual([]);
+    expect(out).toEqual([['Intro'], ['Bg']]);
   });
 });

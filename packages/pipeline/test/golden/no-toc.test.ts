@@ -57,8 +57,8 @@ function buildStubs(): Map<string, { text: string }> {
   const tagged = tagPages(pages);
   stubs.set(hashPrompt([noTocHeadingsPrompt(tagged)]), {
     text: JSON.stringify([
-      { structure: '1', title: 'Introduction', physical_index: '<physical_index_2>' },
-      { structure: '2', title: 'Body', physical_index: '<physical_index_3>' },
+      ['1', 'Introduction'],
+      ['2', 'Body'],
     ]),
   });
 

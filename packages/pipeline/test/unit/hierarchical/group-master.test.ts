@@ -5,21 +5,21 @@ import { groupMasterPrompt } from '../../../src/prompts/group-master.js';
 import type { Heading } from '../../../src/hierarchical/subgroup-agent.js';
 
 describe('groupMaster', () => {
-  it('returns structured tuples on direct merge', async () => {
-    const sub: Heading[][] = [[['Intro', 5]], [['Bg', 7]]];
+  it('returns [structure,title] tuples on direct merge', async () => {
+    const sub: Heading[][] = [[['Intro']], [['Bg']]];
     const responses = new Map([
-      [hashPrompt([groupMasterPrompt(sub, undefined)]), { text: '[["1","Intro",5],["1.1","Bg",7]]' }],
+      [hashPrompt([groupMasterPrompt(sub, undefined)]), { text: '[["1","Intro"],["1.1","Bg"]]' }],
     ]);
     const out = await groupMaster(sub, [], { gemini: createStubGemini({ responses }), maxRetrievals: 3 });
-    expect(out).toEqual([['1', 'Intro', 5], ['1.1', 'Bg', 7]]);
+    expect(out).toEqual([['1', 'Intro'], ['1.1', 'Bg']]);
   });
 
-  it('preserves logical when returned by master', async () => {
-    const sub: Heading[][] = [[['Intro', 1, 5]], [['Bg', null, 7]]];
+  it('coerces legacy tuples to [structure,title]', async () => {
+    const sub: Heading[][] = [[['Intro']], [['Bg']]];
     const responses = new Map([
-      [hashPrompt([groupMasterPrompt(sub, undefined)]), { text: '[["1","Intro",1,5],["1.1","Bg",null,7]]' }],
+      [hashPrompt([groupMasterPrompt(sub, undefined)]), { text: '[["1","Intro",1,5],["1.1","Bg",7]]' }],
     ]);
     const out = await groupMaster(sub, [], { gemini: createStubGemini({ responses }), maxRetrievals: 3 });
-    expect(out).toEqual([['1', 'Intro', 1, 5], ['1.1', 'Bg', null, 7]]);
+    expect(out).toEqual([['1', 'Intro'], ['1.1', 'Bg']]);
   });
 });
