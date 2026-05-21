@@ -7,7 +7,8 @@ import type { Chunk } from './chunk.js';
 
 export type LegacyHeading = [string, number];
 export type HeadingWithLogical = [string, number | null, number];
-export type Heading = LegacyHeading | HeadingWithLogical;
+export type HeadingTitleOnly = [string];
+export type Heading = HeadingTitleOnly | LegacyHeading | HeadingWithLogical;
 
 interface Opts { gemini: GeminiClient; }
 

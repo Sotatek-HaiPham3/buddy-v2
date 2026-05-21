@@ -33,6 +33,10 @@ function fromStructuredHeading(row: StructuredHeading): FlatTocEntry {
 
 function fromNoTocHeading(row: NoTocHeadingRow): FlatTocEntry {
   if (Array.isArray(row)) {
+    if (row.length === 2) {
+      const [structure, title] = row;
+      return { structure, title };
+    }
     if (row.length === 4) {
       const [structure, title, logical, physical_index] = row;
       return logical === null
@@ -40,14 +44,20 @@ function fromNoTocHeading(row: NoTocHeadingRow): FlatTocEntry {
         : { structure, title, page: logical, physical_index };
     }
     const [structure, title, physical_index] = row;
-    return { structure, title, physical_index };
+    return physical_index === undefined
+      ? { structure, title }
+      : { structure, title, physical_index };
   }
 
   const physical_index = parsePhysicalIndexTag(row.physical_index);
   if (row.logical_page === undefined || row.logical_page === null) {
-    return { structure: row.structure, title: row.title, physical_index };
+    return physical_index === undefined
+      ? { structure: row.structure, title: row.title }
+      : { structure: row.structure, title: row.title, physical_index };
   }
-  return { structure: row.structure, title: row.title, page: row.logical_page, physical_index };
+  return physical_index === undefined
+    ? { structure: row.structure, title: row.title, page: row.logical_page }
+    : { structure: row.structure, title: row.title, page: row.logical_page, physical_index };
 }
 
 /**

@@ -45,9 +45,11 @@ export const verifyMappingResponseSchema = z.object({
 const positiveIntSchema = z.number().int().positive();
 const nullablePositiveIntSchema = positiveIntSchema.nullable();
 
+const subgroupHeadingTitleOnlySchema = z.tuple([z.string()]);
 const subgroupHeadingLegacySchema = z.tuple([z.string(), positiveIntSchema]);
 const subgroupHeadingWithLogicalSchema = z.tuple([z.string(), nullablePositiveIntSchema, positiveIntSchema]);
 
+const structuredHeading2TupleSchema = z.tuple([z.string(), z.string()]);
 const structuredHeadingLegacySchema = z.tuple([z.string(), z.string(), positiveIntSchema]);
 const structuredHeadingWithLogicalSchema = z.tuple([z.string(), z.string(), nullablePositiveIntSchema, positiveIntSchema]);
 
@@ -62,11 +64,13 @@ const noTocHeadingLegacyTupleSchema = structuredHeadingLegacySchema;
 const noTocHeadingWithLogicalTupleSchema = structuredHeadingWithLogicalSchema;
 
 export const subgroupHeadingsResponseSchema = z.array(z.union([
+  subgroupHeadingTitleOnlySchema,
   subgroupHeadingLegacySchema,
   subgroupHeadingWithLogicalSchema,
 ]));
 
 export const noTocHeadingsResponseSchema = z.array(z.union([
+  structuredHeading2TupleSchema,
   noTocHeadingObjectSchema,
   noTocHeadingLegacyTupleSchema,
   noTocHeadingWithLogicalTupleSchema,
@@ -74,6 +78,7 @@ export const noTocHeadingsResponseSchema = z.array(z.union([
 
 export const masterMergeResponseSchema = z.array(
   z.union([
+    structuredHeading2TupleSchema,
     structuredHeadingLegacySchema,
     structuredHeadingWithLogicalSchema,
     z.object({ action: z.literal('retrieve'), pages: z.array(z.number().int().positive()), reason: z.string() }),
