@@ -1,32 +1,41 @@
+import { PNG } from 'pngjs';
 import { describe, expect, it } from 'vitest';
-import { getPageCount, getPageImage, getPageText, openPdf } from '../src/pdf.js';
+import {
+  cropPng,
+  getPageCount,
+  getPageImage,
+  getPageText,
+  openPdf,
+  renderPage,
+} from '../src/pdf.js';
 import { makeSamplePdf } from './fixtures/make-sample-pdf.js';
 
 describe('pdf wrapper', () => {
-  it('opens a PDF buffer and reports page count', async () => {
+  async function openSamplePdf() {
     const bytes = await makeSamplePdf();
-    const doc = openPdf(Buffer.from(bytes));
+    return openPdf(Buffer.from(bytes));
+  }
+
+  it('opens a PDF buffer and reports page count', async () => {
+    const doc = await openSamplePdf();
     expect(getPageCount(doc)).toBe(3);
   });
 
   it('extracts text containing expected page marker', async () => {
-    const bytes = await makeSamplePdf();
-    const doc = openPdf(Buffer.from(bytes));
+    const doc = await openSamplePdf();
     const text = getPageText(doc, 0);
     expect(text).toContain('Page 1');
     expect(text).toContain('Hello buddy 1');
   });
 
   it('returns text per page independently', async () => {
-    const bytes = await makeSamplePdf();
-    const doc = openPdf(Buffer.from(bytes));
+    const doc = await openSamplePdf();
     expect(getPageText(doc, 1)).toContain('Page 2');
     expect(getPageText(doc, 2)).toContain('Page 3');
   });
 
   it('renders a page to PNG bytes', async () => {
-    const bytes = await makeSamplePdf();
-    const doc = openPdf(Buffer.from(bytes));
+    const doc = await openSamplePdf();
     const png = getPageImage(doc, 0, 1.0);
     // PNG magic header: 89 50 4E 47
     expect(png[0]).toBe(0x89);
@@ -36,9 +45,47 @@ describe('pdf wrapper', () => {
     expect(png.length).toBeGreaterThan(100);
   });
 
+  it('renderPage returns PNG bytes plus pixel dimensions', async () => {
+    const doc = await openSamplePdf();
+    const rendered = renderPage(doc, 0, 2.0);
+
+    expect(rendered.png.length).toBeGreaterThan(100);
+    expect(rendered.png.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+    expect(rendered.widthPx).toBeGreaterThan(0);
+    expect(rendered.heightPx).toBeGreaterThan(0);
+  });
+
+  it('cropPng crops a region and returns a valid PNG', async () => {
+    const doc = await openSamplePdf();
+    const rendered = renderPage(doc, 0, 2.0);
+
+    const cropped = await cropPng(rendered.png, { x: 0, y: 0, w: 50, h: 50 });
+    const parsed = PNG.sync.read(cropped);
+
+    expect(cropped.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+    expect(parsed.width).toBe(50);
+    expect(parsed.height).toBe(50);
+  });
+
+  it('cropPng clamps the region to image bounds', async () => {
+    const doc = await openSamplePdf();
+    const rendered = renderPage(doc, 0, 2.0);
+
+    const cropped = await cropPng(rendered.png, {
+      x: -10,
+      y: -10,
+      w: rendered.widthPx + 100,
+      h: rendered.heightPx + 100,
+    });
+    const parsed = PNG.sync.read(cropped);
+
+    expect(cropped.length).toBeGreaterThan(0);
+    expect(parsed.width).toBe(rendered.widthPx);
+    expect(parsed.height).toBe(rendered.heightPx);
+  });
+
   it('throws on out-of-range page index', async () => {
-    const bytes = await makeSamplePdf();
-    const doc = openPdf(Buffer.from(bytes));
+    const doc = await openSamplePdf();
     expect(() => getPageText(doc, 99)).toThrow();
   });
 });

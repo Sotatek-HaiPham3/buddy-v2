@@ -2,7 +2,9 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   resolveDocCacheDir,
+  resolveDocImagesDir,
   resolveDocPagesDir,
+  resolveDocTablesDir,
   resolveDocTreePath,
   resolveImagesDir,
   resolveIndexDir,
@@ -42,6 +44,18 @@ describe('paths', () => {
   it('resolveImagesDir adds images/<doc>', () => {
     expect(resolveImagesDir(DATA, 'finance', 'doc_abc')).toBe(
       path.join(DATA, 'finance', '.index', 'images', 'doc_abc'),
+    );
+  });
+
+  it('resolveDocImagesDir adds <doc>/images', () => {
+    expect(resolveDocImagesDir(DATA, 'finance', 'doc_abc')).toBe(
+      path.join(DATA, 'finance', '.index', 'doc_abc', 'images'),
+    );
+  });
+
+  it('resolveDocTablesDir adds <doc>/tables', () => {
+    expect(resolveDocTablesDir(DATA, 'finance', 'doc_abc')).toBe(
+      path.join(DATA, 'finance', '.index', 'doc_abc', 'tables'),
     );
   });
 

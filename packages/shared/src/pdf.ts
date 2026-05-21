@@ -1,4 +1,5 @@
 import * as mupdf from 'mupdf';
+import { PNG } from 'pngjs';
 
 export interface PdfDoc {
   readonly _doc: mupdf.PDFDocument;
@@ -38,12 +39,53 @@ export function getPageText(doc: PdfDoc, pageIndex: number): string {
 }
 
 export function getPageImage(doc: PdfDoc, pageIndex: number, scale = 1.0): Buffer {
+  return renderPage(doc, pageIndex, scale).png;
+}
+
+export interface PageRender {
+  png: Buffer;
+  widthPx: number;
+  heightPx: number;
+}
+
+export function renderPage(doc: PdfDoc, pageIndex: number, scale = 2.0): PageRender {
   assertPageIndex(doc, pageIndex);
   const page = doc._doc.loadPage(pageIndex);
   const matrix = mupdf.Matrix.scale(scale, scale);
   const pixmap = page.toPixmap(matrix, mupdf.ColorSpace.DeviceRGB, false, true);
-  const png = pixmap.asPNG();
-  return Buffer.from(png);
+  return {
+    png: Buffer.from(pixmap.asPNG()),
+    widthPx: pixmap.getWidth(),
+    heightPx: pixmap.getHeight(),
+  };
+}
+
+export interface PixelBbox {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export async function cropPng(png: Buffer, bbox: PixelBbox): Promise<Buffer> {
+  const src = PNG.sync.read(png);
+  const maxLeft = Math.max(0, src.width - 1);
+  const maxTop = Math.max(0, src.height - 1);
+  const left = Math.max(0, Math.min(maxLeft, Math.floor(bbox.x)));
+  const top = Math.max(0, Math.min(maxTop, Math.floor(bbox.y)));
+  const right = Math.max(left + 1, Math.min(src.width, Math.ceil(bbox.x + bbox.w)));
+  const bottom = Math.max(top + 1, Math.min(src.height, Math.ceil(bbox.y + bbox.h)));
+  const width = right - left;
+  const height = bottom - top;
+  const dst = new PNG({ width, height });
+
+  for (let row = 0; row < height; row++) {
+    const srcStart = ((top + row) * src.width + left) * 4;
+    const dstStart = row * width * 4;
+    src.data.copy(dst.data, dstStart, srcStart, srcStart + width * 4);
+  }
+
+  return PNG.sync.write(dst);
 }
 
 export interface EmbeddedImage {

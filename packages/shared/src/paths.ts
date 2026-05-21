@@ -18,5 +18,11 @@ export const resolveDocPagesDir = (dataDir: string, topic: string, docId: string
 export const resolveImagesDir = (dataDir: string, topic: string, docId: string): string =>
   path.join(resolveIndexDir(dataDir, topic), 'images', docId);
 
+export const resolveDocImagesDir = (dataDir: string, topic: string, docId: string): string =>
+  path.join(resolveIndexDir(dataDir, topic), docId, 'images');
+
+export const resolveDocTablesDir = (dataDir: string, topic: string, docId: string): string =>
+  path.join(resolveIndexDir(dataDir, topic), docId, 'tables');
+
 export const resolveLogsDir = (dataDir: string, topic: string): string =>
   path.join(resolveIndexDir(dataDir, topic), 'logs');
