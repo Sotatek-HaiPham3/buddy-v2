@@ -1,7 +1,9 @@
 export const noTocHeadingsPrompt = (taggedPages: string): string => `You are an expert in extracting hierarchical tree structure.
 Generate the tree structure of the document.
 
-The text contains tags like <physical_index_N> to mark page boundaries.
+The text contains tags like <physical_index_N> to mark page boundaries. N is the physical page number within this document (starting at 1).
+
+IMPORTANT: The "physical_index" value in your response MUST be the tag string exactly as it appears (e.g. "<physical_index_1>"). Do NOT use any numbers printed inside the page text — those may be document-wide page numbers or codes, not the physical page index.
 
 Response format:
 [
