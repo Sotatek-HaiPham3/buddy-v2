@@ -20,6 +20,8 @@ export interface TreeNode {
   end_index: number;
   node_id: string;
   summary?: string;
+  doc_page_start?: number;
+  doc_page_end?: number;
   nodes: TreeNode[];
   images: ImageRef[];
   tables: TableRef[];
@@ -33,6 +35,8 @@ const _treeNodeSchema: z.ZodType<unknown> = z.lazy(() =>
       end_index: z.number().int().positive(),
       node_id: z.string(),
       summary: z.string().optional(),
+      doc_page_start: z.number().int().positive().optional(),
+      doc_page_end: z.number().int().positive().optional(),
       nodes: z.array(_treeNodeSchema).default([]),
       images: z.array(imageRefSchema).default([]),
       tables: z.array(tableRefSchema).default([]),

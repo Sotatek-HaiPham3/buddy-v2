@@ -58,6 +58,36 @@ describe('treeNodeSchema', () => {
       }),
     ).toThrow();
   });
+
+  it('accepts doc_page_start and doc_page_end as optional numbers', () => {
+    const node = treeNodeSchema.parse({
+      title: 'Chapter 1',
+      start_index: 1,
+      end_index: 2,
+      node_id: 'n1',
+      nodes: [],
+      images: [],
+      tables: [],
+      doc_page_start: 5,
+      doc_page_end: 6,
+    });
+    expect(node.doc_page_start).toBe(5);
+    expect(node.doc_page_end).toBe(6);
+  });
+
+  it('accepts TreeNode without doc_page fields', () => {
+    const node = treeNodeSchema.parse({
+      title: 'Chapter 1',
+      start_index: 1,
+      end_index: 2,
+      node_id: 'n1',
+      nodes: [],
+      images: [],
+      tables: [],
+    });
+    expect(node.doc_page_start).toBeUndefined();
+    expect(node.doc_page_end).toBeUndefined();
+  });
 });
 
 describe('docOutputSchema', () => {
