@@ -15,7 +15,8 @@
     "lint": "biome check .",
     "format": "biome format --write .",
     "clean": "pnpm -r exec rm -rf dist node_modules .tsbuildinfo",
-    "build-index": "pnpm --filter @buddy/build-index start"
+    "build-index": "pnpm --filter @buddy/build-index start",
+    "serve": "pnpm --filter @buddy/serve start"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

@@ -1,0 +1,31 @@
+{
+  "name": "@buddy/query",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup && tsc --project tsconfig.build.json --emitDeclarationOnly --declaration --declarationMap",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --config vitest.config.ts --passWithNoTests"
+  },
+  "dependencies": {
+    "@buddy/shared": "workspace:*",
+    "chokidar": "^3.6.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "pdf-lib": "^1.17.1",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
