@@ -21,13 +21,15 @@ interface Opts {
 type NoTocHeadingRow = z.infer<typeof noTocHeadingsResponseSchema>[number];
 
 function fromStructuredHeading(row: StructuredHeading): FlatTocEntry {
-  if (row.length === 4) {
-    const [structure, title, logical, physical_index] = row;
-    return logical === null
-      ? { structure, title, physical_index }
-      : { structure, title, page: logical, physical_index };
+  if (row.length === 2) {
+    const [structure, title] = row;
+    return { structure, title };
   }
-  const [structure, title, physical_index] = row;
+  if (row.length === 4) {
+    const [structure, title, logical, physical_index] = row as [string, string, number | null, number];
+    return logical === null ? { structure, title, physical_index } : { structure, title, page: logical, physical_index };
+  }
+  const [structure, title, physical_index] = row as [string, string, number];
   return { structure, title, physical_index };
 }
 

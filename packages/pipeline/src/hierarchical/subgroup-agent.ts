@@ -24,7 +24,7 @@ export async function subgroupAgent(chunk: Chunk, opts: Opts): Promise<Heading[]
       console.error(`[subgroup-agent] schema parse failed for response:`, r.text);
       throw err;
     }
-    return parsed;
+    return parsed.map((entry) => [entry[0]]);
   } catch {
     return [];
   }

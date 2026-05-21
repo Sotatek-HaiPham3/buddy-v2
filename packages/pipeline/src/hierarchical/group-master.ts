@@ -5,9 +5,10 @@ import { tagPages } from '../page-tag.js';
 import type { Heading } from './subgroup-agent.js';
 import type { RawPage } from '../types.js';
 
-export type LegacyStructuredHeading = [string, string, number];
-export type StructuredHeadingWithLogical = [string, string, number | null, number];
-export type StructuredHeading = LegacyStructuredHeading | StructuredHeadingWithLogical;
+export type StructuredHeading =
+  | [string, string]
+  | [string, string, number]
+  | [string, string, number | null, number];
 
 interface Opts { gemini: GeminiClient; maxRetrievals: number; }
 interface RetrieveAction { action: 'retrieve'; pages: number[]; reason?: string; }
@@ -34,19 +35,10 @@ function coerceStructuredHeadings(rows: unknown[]): Array<StructuredHeading | Re
       }
       continue;
     }
-    if (!Array.isArray(row) || row.length < 3) continue;
+    if (!Array.isArray(row) || row.length < 2) continue;
     const structure = String(row[0] ?? '');
     const title = String(row[1] ?? '');
-    const last = row[row.length - 1];
-    const physical = toPositiveInt(last);
-    if (!physical) continue;
-    if (row.length >= 4) {
-      const logicalRaw = row[2];
-      const logical = logicalRaw === null ? null : toPositiveInt(logicalRaw);
-      out.push([structure, title, logical, physical]);
-      continue;
-    }
-    out.push([structure, title, physical]);
+    out.push([structure, title]);
   }
   return out;
 }

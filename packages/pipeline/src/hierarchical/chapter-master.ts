@@ -20,5 +20,7 @@ export async function chapterMaster(
     console.error(`[chapter-master] schema parse failed for response:`, r.text);
     throw err;
   }
-  return parsed.filter((p): p is StructuredHeading => Array.isArray(p));
+  return parsed
+    .filter((p): p is StructuredHeading => Array.isArray(p))
+    .map((p) => [p[0], p[1]]);
 }
