@@ -29,6 +29,7 @@ export default function Chat() {
   const { data: messages = [] } = useMessages(activeConvId);
   const { pending, send } = useChatStream({ conversationId: activeConvId ?? '' });
   const [preview, setPreview] = useState<{ docId: string; page: number } | null>(null);
+  const [citationError, setCitationError] = useState<string | null>(null);
 
   const handleSend = async (q: string) => {
     let cid = activeConvId;
@@ -75,12 +76,22 @@ export default function Chat() {
         onExportConversation={exportConversation}
       />
       <main className="flex flex-1 flex-col">
+        {citationError ? (
+          <div className="mx-3 mt-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            {citationError}
+          </div>
+        ) : null}
         <MessageList
           messages={messages}
           pending={pending}
           onCitationClick={({ doc, page }) => {
+            setCitationError(null);
             const hit = docs.find((d) => d.doc_name === doc);
-            if (hit) setPreview({ docId: hit.doc_id, page });
+            if (hit) {
+              setPreview({ docId: hit.doc_id, page });
+              return;
+            }
+            setCitationError(`Could not resolve citation source: ${doc}`);
           }}
         />
         <Composer onSubmit={handleSend} pending={!!pending && !pending.done} />
