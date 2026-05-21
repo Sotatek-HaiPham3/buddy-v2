@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { buildTree } from '../../../src/steps/07-build-tree.js';
 import type { FlatTocEntry } from '../../../src/types.js';
 
+const entry = (overrides: Partial<FlatTocEntry> & { structure: string; title: string; physical_index: number }): FlatTocEntry => ({
+  appear_start: 'yes',
+  ...overrides,
+});
+
 describe('buildTree', () => {
   it('builds parent-child + end_index from siblings', () => {
     const toc: FlatTocEntry[] = [
@@ -38,5 +43,50 @@ describe('buildTree', () => {
       5,
     );
     expect(tree).toHaveLength(1);
+  });
+});
+
+describe('buildTree — doc_page propagation', () => {
+  it('sets doc_page_start from FlatTocEntry.page when present', () => {
+    const toc: FlatTocEntry[] = [
+      entry({ structure: '1', title: 'Chapter 1', physical_index: 1, page: 5 }),
+      entry({ structure: '2', title: 'Chapter 2', physical_index: 2, page: 6 }),
+    ];
+    const tree = buildTree(toc, 2);
+    expect(tree[0].doc_page_start).toBe(5);
+    expect(tree[1].doc_page_start).toBe(6);
+  });
+
+  it('sets doc_page_end to next sibling page minus 1', () => {
+    const toc: FlatTocEntry[] = [
+      entry({ structure: '1', title: 'Chapter 1', physical_index: 1, page: 5 }),
+      entry({ structure: '2', title: 'Chapter 2', physical_index: 2, page: 8 }),
+    ];
+    const tree = buildTree(toc, 2);
+    expect(tree[0].doc_page_end).toBe(7);   // 8 - 1
+    expect(tree[1].doc_page_end).toBeUndefined(); // last node, no next sibling
+  });
+
+  it('leaves doc_page_start/end undefined when FlatTocEntry has no page', () => {
+    const toc: FlatTocEntry[] = [
+      entry({ structure: '1', title: 'Section 1', physical_index: 1 }),
+      entry({ structure: '2', title: 'Section 2', physical_index: 2 }),
+    ];
+    const tree = buildTree(toc, 2);
+    expect(tree[0].doc_page_start).toBeUndefined();
+    expect(tree[0].doc_page_end).toBeUndefined();
+  });
+
+  it('propagates doc_page_end up to parent from deepest child', () => {
+    const toc: FlatTocEntry[] = [
+      entry({ structure: '1',   title: 'Chapter 1', physical_index: 1, page: 5 }),
+      entry({ structure: '1.1', title: 'Section A', physical_index: 1, page: 5 }),
+      entry({ structure: '1.2', title: 'Section B', physical_index: 2, page: 6 }),
+      entry({ structure: '2',   title: 'Chapter 2', physical_index: 3, page: 9 }),
+    ];
+    const tree = buildTree(toc, 3);
+    // Chapter 1's doc_page_end should be max of its children's doc_page_end
+    expect(tree[0].doc_page_end).toBe(8);   // Section B doc_page_end = 9-1 = 8
+    expect(tree[0].doc_page_start).toBe(5);
   });
 });

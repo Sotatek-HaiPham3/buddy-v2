@@ -2,7 +2,7 @@ import { nodeId } from '@buddy/shared';
 import type { TreeNode } from '@buddy/shared';
 import type { FlatTocEntry } from '../types.js';
 
-interface WorkingNode extends TreeNode { _structure: string; _appearStart: 'yes' | 'no'; }
+interface WorkingNode extends TreeNode { _structure: string; _appearStart: 'yes' | 'no'; _docPage?: number; }
 
 function parentStructure(s: string): string | null {
   const parts = s.split('.');
@@ -23,6 +23,8 @@ export function buildTree(toc: FlatTocEntry[], totalPages: number): TreeNode[] {
     tables: [],
     _structure: e.structure,
     _appearStart: e.appear_start ?? 'yes',
+    _docPage: e.page,
+    doc_page_start: e.page,
   }));
 
   // Assign leaf end_index first, based on the next sibling in flat order.
@@ -30,9 +32,17 @@ export function buildTree(toc: FlatTocEntry[], totalPages: number): TreeNode[] {
   for (let i = 0; i < flat.length; i++) {
     const cur = flat[i]!;
     const next = flat[i + 1];
-    if (!next) cur.end_index = totalPages;
-    else cur.end_index = next._appearStart === 'no' ? next.start_index : next.start_index - 1;
-    if (cur.end_index < cur.start_index) cur.end_index = cur.start_index;
+    if (!next) {
+      cur.end_index = totalPages;
+      // doc_page_end left undefined for last node (no next sibling)
+    } else {
+      cur.end_index = next._appearStart === 'no' ? next.start_index : next.start_index - 1;
+      if (cur.end_index < cur.start_index) cur.end_index = cur.start_index;
+      if (cur._docPage !== undefined && next._docPage !== undefined) {
+        cur.doc_page_end = next._appearStart === 'no' ? next._docPage : next._docPage - 1;
+        if (cur.doc_page_end < cur._docPage) cur.doc_page_end = cur._docPage;
+      }
+    }
   }
 
   const byStruct = new Map<string, WorkingNode>();
@@ -51,6 +61,12 @@ export function buildTree(toc: FlatTocEntry[], totalPages: number): TreeNode[] {
     if (node.nodes.length > 0) {
       const maxChildEnd = Math.max(...node.nodes.map(c => (c as unknown as WorkingNode).end_index));
       node.end_index = Math.max(node.end_index, maxChildEnd);
+      const childDocPageEnds = node.nodes
+        .map(c => (c as unknown as WorkingNode).doc_page_end)
+        .filter((v): v is number => v !== undefined);
+      if (childDocPageEnds.length > 0) {
+        node.doc_page_end = Math.max(...childDocPageEnds);
+      }
     }
   }
   for (const root of roots) propagateEnd(root);
@@ -59,6 +75,6 @@ export function buildTree(toc: FlatTocEntry[], totalPages: number): TreeNode[] {
 }
 
 function stripWorking(n: WorkingNode): TreeNode {
-  const { _structure: _s, _appearStart: _a, ...rest } = n;
+  const { _structure: _s, _appearStart: _a, _docPage: _dp, ...rest } = n;
   return rest;
 }
