@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import * as shared from '@buddy/shared';
 import {
   cropPng,
   createStubGemini,
@@ -10,7 +11,7 @@ import {
   renderPage,
   type LlmPool,
 } from '@buddy/shared';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { runImagePipeline } from '../../../src/image/pipeline.js';
 import { describeImagePrompt } from '../../../src/prompts/describe-image.js';
 import { detectImageBboxPrompt } from '../../../src/prompts/detect-image-bbox.js';
@@ -142,6 +143,7 @@ describe('runImagePipeline', () => {
     const doc = openPdf(pdf);
     const gemini = createStubGemini({ responses: new Map() });
     const pages: RawPage[] = [{ pageNumber: 1, text: '', tokenCount: 0 }];
+    const logger = { warn: vi.fn() };
 
     await expect(
       runImagePipeline({
@@ -149,10 +151,16 @@ describe('runImagePipeline', () => {
         pages,
         dir: await makeTempDir(),
         gemini,
+        logger,
         pool: async <T,>(fn: () => Promise<T>) => fn(),
         visionModel: 'vision-x',
       }),
     ).resolves.toEqual([]);
+    expect(logger.warn).toHaveBeenCalledTimes(1);
+    expect(logger.warn.mock.calls[0]?.[0]).toMatchObject({
+      err: expect.any(Error),
+      page: 1,
+    });
   });
 
   it('does not invoke vision detection on text-dense prose pages', async () => {
@@ -174,5 +182,28 @@ describe('runImagePipeline', () => {
 
     expect(images).toEqual([]);
     expect(gemini.calls).toHaveLength(0);
+  });
+
+  it('bubbles renderPage failures instead of swallowing them', async () => {
+    const pdf = await makeBlankPdf();
+    const doc = openPdf(pdf);
+    const gemini = createStubGemini({ responses: new Map() });
+    const pages: RawPage[] = [{ pageNumber: 1, text: '', tokenCount: 0 }];
+    const renderSpy = vi.spyOn(shared, 'renderPage').mockImplementation(() => {
+      throw new Error('render failed');
+    });
+
+    await expect(
+      runImagePipeline({
+        doc,
+        pages,
+        dir: await makeTempDir(),
+        gemini,
+        pool: async <T,>(fn: () => Promise<T>) => fn(),
+        visionModel: 'vision-x',
+      }),
+    ).rejects.toThrow('render failed');
+
+    renderSpy.mockRestore();
   });
 });

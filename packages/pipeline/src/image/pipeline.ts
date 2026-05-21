@@ -20,6 +20,7 @@ interface RunImagePipelineOpts {
   gemini: GeminiClient;
   pool: LlmPool;
   visionModel?: string;
+  logger?: { warn(...args: unknown[]): void };
 }
 
 const VISION_FALLBACK_MAX_TEXT_LENGTH = 40;
@@ -43,8 +44,8 @@ export async function runImagePipeline(opts: RunImagePipelineOpts): Promise<Desc
     let detected: DetectedImage[] = detectEmbeddedImages(opts.doc, page.pageNumber);
 
     if (detected.length === 0 && shouldUseVisionFallback(page)) {
+      const pageRender = renderPage(opts.doc, page.pageNumber - 1, 2.0);
       try {
-        const pageRender = renderPage(opts.doc, page.pageNumber - 1, 2.0);
         detected = await opts.pool(() =>
           detectViaVision({
             gemini: opts.gemini,
@@ -53,7 +54,11 @@ export async function runImagePipeline(opts: RunImagePipelineOpts): Promise<Desc
             ...(opts.visionModel ? { visionModel: opts.visionModel } : {}),
           }),
         );
-      } catch {
+      } catch (err) {
+        opts.logger?.warn(
+          { err, page: page.pageNumber },
+          'image vision fallback failed; continuing without detected images',
+        );
         detected = [];
       }
     }
