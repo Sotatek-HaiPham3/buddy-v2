@@ -87,4 +87,10 @@ describe('resolveVisionModel', () => {
   it('auto with only openaiApiKey returns openaiVisionModel', () => {
     expect(resolveVisionModel(cfg({ llmProvider: 'auto', openaiApiKey: 'ok' }))).toBe('gpt-4o');
   });
+
+  it('auto with no keys throws', () => {
+    expect(() => resolveVisionModel(cfg({ llmProvider: 'auto' }))).toThrow(
+      'No LLM key configured',
+    );
+  });
 });

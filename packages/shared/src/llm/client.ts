@@ -7,7 +7,7 @@ function resolvedProvider(cfg: Config): 'gemini' | 'openai' {
   if (cfg.llmProvider !== 'auto') return cfg.llmProvider;
   if (cfg.geminiApiKey) return 'gemini';
   if (cfg.openaiApiKey) return 'openai';
-  return 'gemini'; // will throw below when key is missing
+  throw new Error('No LLM key configured. Set GEMINI_API_KEY or OPENAI_API_KEY.');
 }
 
 export function createLlmClient(cfg: Config): GeminiClient {
