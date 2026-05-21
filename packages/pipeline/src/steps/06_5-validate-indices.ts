@@ -26,7 +26,7 @@ export function validateIndices(toc: FlatTocEntry[], pageCount: number): FlatToc
   let lastLogical: number | undefined;
   return physicallyValidated.map(e => {
     if (e.page === undefined) return e;
-    if (e.page < 1 || e.page > pageCount) {
+    if (e.page < 1) {
       const { page: _drop, ...rest } = e;
       return rest;
     }

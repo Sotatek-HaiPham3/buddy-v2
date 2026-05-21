@@ -46,10 +46,29 @@ describe('validateIndices', () => {
     expect(out[0]?.physical_index).toBe(5);
   });
 
-  it('clears logical page when it exceeds page count', () => {
+  it('preserves logical page when it exceeds physical pageCount (logical can be a book page number)', () => {
     const out = validateIndices([{ structure: '1', title: 'A', page: 11, physical_index: 5 }], 10);
-    expect(out[0]?.page).toBeUndefined();
+    // logical=11 exceeds pageCount=10 but that is valid: e.g. a chapter extracted from a larger book
+    expect(out[0]?.page).toBe(11);
     expect(out[0]?.physical_index).toBe(5);
+  });
+
+  it('preserves logical page above pageCount (logical can exceed physical pageCount)', () => {
+    const entries: FlatTocEntry[] = [
+      { structure: '1.1', title: 'CHIPPING POTATOES', page: 24, physical_index: 1 },
+      { structure: '1.2', title: 'CABBAGE', page: 32, physical_index: 9 },
+    ];
+    const out = validateIndices(entries, 10);   // pageCount=10, logical=24,32 are valid
+    expect(out[0]?.page).toBe(24);
+    expect(out[1]?.page).toBe(32);
+  });
+
+  it('still drops logical below 1', () => {
+    const entries: FlatTocEntry[] = [
+      { structure: '1.1', title: 'X', page: 0, physical_index: 1 },
+    ];
+    const out = validateIndices(entries, 10);
+    expect(out[0]?.page).toBeUndefined();
   });
 
   it('clears physical_index when sequence regresses', () => {
