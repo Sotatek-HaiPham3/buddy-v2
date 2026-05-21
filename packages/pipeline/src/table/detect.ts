@@ -134,7 +134,7 @@ function coalesceIntoTables(rows: TableRow[], pageNum: number): DetectedTable[] 
     }
 
     // Check column count consistency ±1
-    const prevColCount = group[group.length - 1].cells.length;
+    const prevColCount = group[group.length - 1]!.cells.length;
     const currColCount = row.cells.length;
     if (Math.abs(currColCount - prevColCount) <= 1) {
       group.push(row);

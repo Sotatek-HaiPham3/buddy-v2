@@ -1,7 +1,10 @@
-import { withRetry } from '@buddy/shared';
+import fs from 'node:fs/promises';
+import { withRetry, openPdf } from '@buddy/shared';
 import { withLogger } from './wrappers/with-logger.js';
 import { withCache } from './cache.js';
 import { extractPages } from './steps/01-extract.js';
+import { runImagePipeline } from './image/pipeline.js';
+import { runTablePipeline } from './table/pipeline.js';
 import { detectTocPages } from './steps/02-detect-toc.js';
 import { extractTocContent } from './steps/03-toc-content.js';
 import { detectPageNumbers } from './steps/04-detect-page-numbers.js';
@@ -32,6 +35,22 @@ async function step<T>(ctx: Ctx, name: string, fn: () => Promise<T>): Promise<T>
 
 export async function runPipeline(ctx: Ctx, outPath: string, docName: string): Promise<DocOutput> {
   const pages: RawPage[] = await step(ctx, '01-extract', () => extractPages(ctx.pdfPath));
+
+  const pdfBytes = await fs.readFile(ctx.pdfPath);
+  const pdfDoc = openPdf(pdfBytes);
+
+  const imagesPromise = ctx.opts.imagesEnabled
+    ? step(ctx, 'image-pipeline', () => runImagePipeline({
+        doc: pdfDoc, pages, dir: ctx.imagesDir,
+        gemini: ctx.gemini, pool: ctx.pool, visionModel: ctx.opts.visionModel,
+      }))
+    : Promise.resolve([]);
+
+  const tablesPromise = ctx.opts.tablesEnabled
+    ? step(ctx, 'table-pipeline', () => runTablePipeline({
+        doc: pdfDoc, pages, dir: ctx.tablesDir, gemini: ctx.gemini, pool: ctx.pool,
+      }))
+    : Promise.resolve([]);
 
   const tocPages: number[] = await step(ctx, '02-detect-toc', () =>
     ctx.pool(() => detectTocPages(pages, { gemini: ctx.gemini, maxScan: ctx.opts.tocCheckPageNum })),
@@ -116,8 +135,10 @@ export async function runPipeline(ctx: Ctx, outPath: string, docName: string): P
   if (ctx.opts.addSummaries) {
     tree = await step(ctx, '09-add-summaries', () => addSummaries(tree, pages, { gemini: ctx.gemini, pool: ctx.pool }));
   }
+  const [images, tables] = await Promise.all([imagesPromise, tablesPromise]);
   return outputJson(tree, {
     docId: ctx.docId, docName, outPath, gemini: ctx.gemini,
     generateDescription: ctx.opts.addSummaries,
+    images, tables,
   });
 }

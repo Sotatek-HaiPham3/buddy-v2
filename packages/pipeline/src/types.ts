@@ -25,6 +25,9 @@ export interface BuildOpts {
   tocCheckPageNum: number;
   force: boolean;
   forceFromStep?: string;
+  imagesEnabled: boolean;
+  tablesEnabled: boolean;
+  visionModel: string;
 }
 
 export interface Ctx {
@@ -38,6 +41,8 @@ export interface Ctx {
   pdfPath: string;
   cacheDir: string;
   opts: BuildOpts;
+  imagesDir: string;
+  tablesDir: string;
 }
 
 export function buildOptsFromConfig(cfg: Config, override: Partial<BuildOpts> = {}): BuildOpts {
@@ -51,6 +56,9 @@ export function buildOptsFromConfig(cfg: Config, override: Partial<BuildOpts> = 
     maxRetries: cfg.maxRetries,
     tocCheckPageNum: 20,
     force: false,
+    imagesEnabled: cfg.imagesEnabled,
+    tablesEnabled: cfg.tablesEnabled,
+    visionModel: cfg.geminiVisionModel,
     ...override,
   };
 }

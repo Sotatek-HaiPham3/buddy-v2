@@ -2,6 +2,9 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { nodeId, type GeminiClient, type DocOutput, type TreeNode } from '@buddy/shared';
 import { docDescriptionPrompt } from '../prompts/doc-description.js';
+import { attachMultimodal, fromDescribedImages, fromSavedTables } from '../multimodal/attach.js';
+import type { DescribedImage } from '../image/types.js';
+import type { SavedTable } from '../table/types.js';
 
 interface Opts {
   docId: string;
@@ -9,6 +12,8 @@ interface Opts {
   outPath: string;
   gemini: GeminiClient;
   generateDescription: boolean;
+  images?: DescribedImage[];
+  tables?: SavedTable[];
 }
 
 function assignIds(nodes: TreeNode[]): TreeNode[] {
@@ -22,11 +27,15 @@ export async function outputJson(tree: TreeNode[], opts: Opts): Promise<DocOutpu
     description = r.text.trim();
   }
   const withIds = assignIds(tree);
+  const attached = attachMultimodal(withIds, {
+    images: fromDescribedImages(opts.images ?? []),
+    tables: fromSavedTables(opts.tables ?? []),
+  });
   const out: DocOutput = {
     doc_id: opts.docId,
     doc_name: opts.docName,
     doc_description: description,
-    structure: withIds,
+    structure: attached,
   };
   await fs.mkdir(path.dirname(opts.outPath), { recursive: true });
   await fs.writeFile(opts.outPath, JSON.stringify(out, null, 2), 'utf8');

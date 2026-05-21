@@ -3,6 +3,7 @@ import path from 'node:path';
 import {
   createLlmPool, createLogger, createRealGemini, docId as makeDocId, runId as makeRunId,
   resolveDocCacheDir, resolveDocTreePath, resolveIndexDir, resolveLogsDir,
+  resolveDocImagesDir, resolveDocTablesDir,
   type Config, type DocOutput, type GeminiClient, type LlmPool, type Logger,
 } from '@buddy/shared';
 import { runPipeline } from './orchestrator.js';
@@ -25,9 +26,13 @@ export async function buildDoc(args: BuildDocArgs): Promise<DocOutput> {
   const cacheDir = resolveDocCacheDir(args.cfg.dataDir, args.topic, docId);
   const indexDir = resolveIndexDir(args.cfg.dataDir, args.topic);
   const logsDir = resolveLogsDir(args.cfg.dataDir, args.topic);
+  const imagesDir = resolveDocImagesDir(args.cfg.dataDir, args.topic, docId);
+  const tablesDir = resolveDocTablesDir(args.cfg.dataDir, args.topic, docId);
   await fs.mkdir(cacheDir, { recursive: true });
   await fs.mkdir(indexDir, { recursive: true });
   await fs.mkdir(logsDir, { recursive: true });
+  await fs.mkdir(imagesDir, { recursive: true });
+  await fs.mkdir(tablesDir, { recursive: true });
 
   const logger = (args.logger ?? createLogger({ level: args.cfg.logLevel }))
     .child({ runId, topic: args.topic, docId, docName });
@@ -39,6 +44,7 @@ export async function buildDoc(args: BuildDocArgs): Promise<DocOutput> {
     cfg: args.cfg, gemini, pool, logger, runId,
     topic: args.topic, docId, pdfPath: args.pdfPath, cacheDir,
     opts: buildOptsFromConfig(args.cfg, args.optsOverride),
+    imagesDir, tablesDir,
   };
 
   const outPath = resolveDocTreePath(args.cfg.dataDir, args.topic, docId);
