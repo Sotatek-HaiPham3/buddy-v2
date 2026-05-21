@@ -10,6 +10,7 @@ import type {
 interface RealGeminiOpts {
   apiKey: string;
   defaultModel: string;
+  sdkFactory?: (apiKey: string) => GoogleGenerativeAI;
 }
 
 function toSdkParts(parts: ContentPart[]): Part[] {
@@ -21,7 +22,7 @@ function toSdkParts(parts: ContentPart[]): Part[] {
 }
 
 export function createRealGemini(opts: RealGeminiOpts): GeminiClient {
-  const sdk = new GoogleGenerativeAI(opts.apiKey);
+  const sdk = (opts.sdkFactory ?? ((apiKey: string) => new GoogleGenerativeAI(apiKey)))(opts.apiKey);
 
   const getModel = (callOpts?: GenerateOpts) => {
     const modelName = callOpts?.model ?? opts.defaultModel;
@@ -62,6 +63,9 @@ export function createRealGemini(opts: RealGeminiOpts): GeminiClient {
       ...(usage?.promptTokenCount !== undefined ? { promptTokens: usage.promptTokenCount } : {}),
       ...(usage?.candidatesTokenCount !== undefined
         ? { outputTokens: usage.candidatesTokenCount }
+        : {}),
+      ...(usage?.cachedContentTokenCount !== undefined
+        ? { cachedTokens: usage.cachedContentTokenCount }
         : {}),
     };
   };

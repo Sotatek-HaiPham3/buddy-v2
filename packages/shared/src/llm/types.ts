@@ -10,6 +10,7 @@ export interface GenerateResult {
   text: string;
   promptTokens?: number;
   outputTokens?: number;
+  cachedTokens?: number;
 }
 
 export interface GenerateStreamChunk {

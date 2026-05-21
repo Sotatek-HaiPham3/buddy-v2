@@ -51,8 +51,21 @@ export function createRealOpenAI(opts: RealOpenAIOpts): GeminiClient {
     }
     const json = (await response.json()) as {
       choices?: Array<{ message?: { content?: string | null } }>;
+      usage?: {
+        prompt_tokens?: number;
+        completion_tokens?: number;
+        prompt_tokens_details?: { cached_tokens?: number };
+      };
     };
-    return { text: json.choices?.[0]?.message?.content ?? '' };
+    const usage = json.usage;
+    return {
+      text: json.choices?.[0]?.message?.content ?? '',
+      ...(usage?.prompt_tokens !== undefined ? { promptTokens: usage.prompt_tokens } : {}),
+      ...(usage?.completion_tokens !== undefined ? { outputTokens: usage.completion_tokens } : {}),
+      ...(usage?.prompt_tokens_details?.cached_tokens !== undefined
+        ? { cachedTokens: usage.prompt_tokens_details.cached_tokens }
+        : {}),
+    };
   };
 
   async function* generateStream(
