@@ -67,6 +67,8 @@ export async function runPipeline(ctx: Ctx, outPath: string, docName: string): P
         maxRetrievalsPerMaster: ctx.opts.maxRetrievalsPerMaster,
       }),
     );
+    flatToc = await step(ctx, 'fallback-no-toc-validate',
+      async () => validateIndices(flatToc, pages.length));
   } else {
     const tocText = await step(ctx, '03-toc-content', async () => extractTocContent(pages, tocPages));
     const hasPageNums = await step(ctx, '04-detect-page-numbers', () =>
@@ -81,6 +83,8 @@ export async function runPipeline(ctx: Ctx, outPath: string, docName: string): P
           maxRetrievalsPerMaster: ctx.opts.maxRetrievalsPerMaster,
         }),
       );
+      flatToc = await step(ctx, 'fallback-no-toc-validate',
+        async () => validateIndices(flatToc, pages.length));
     } else {
       const tocJson = await step(ctx, '05-toc-transform', () =>
         ctx.pool(() => transformToc(tocText, { gemini: ctx.gemini })),
@@ -109,6 +113,8 @@ export async function runPipeline(ctx: Ctx, outPath: string, docName: string): P
               maxRetrievalsPerMaster: ctx.opts.maxRetrievalsPerMaster,
             }),
           );
+          flatToc = await step(ctx, 'fallback-no-toc-validate',
+            async () => validateIndices(flatToc, pages.length));
         } else {
           flatToc = v2.entries;
         }
