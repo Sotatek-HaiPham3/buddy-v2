@@ -16,14 +16,7 @@ export async function subgroupAgent(chunk: Chunk, opts: Opts): Promise<Heading[]
   try {
     const tagged = tagPages(chunk.pages);
     const r = await opts.gemini.generate([subgroupHeadingsPrompt(tagged)], { maxOutputTokens: 2048 });
-    let parsed;
-    try {
-      parsed = subgroupHeadingsResponseSchema.parse(extractJson(r.text));
-    } catch (err) {
-      // Diagnostic: surface raw LLM output when schema rejects, so we can iterate the schema.
-      console.error(`[subgroup-agent] schema parse failed for response:`, r.text);
-      throw err;
-    }
+    const parsed = subgroupHeadingsResponseSchema.parse(extractJson(r.text));
     return parsed.map((entry) => [entry[0]]);
   } catch {
     return [];
