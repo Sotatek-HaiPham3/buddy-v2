@@ -1,4 +1,4 @@
-import type { GeminiClient, LlmPool, Logger, Config } from '@buddy/shared';
+import { resolveVisionModel, type GeminiClient, type LlmPool, type Logger, type Config } from '@buddy/shared';
 
 export interface RawPage {
   pageNumber: number;
@@ -58,7 +58,7 @@ export function buildOptsFromConfig(cfg: Config, override: Partial<BuildOpts> = 
     force: false,
     imagesEnabled: cfg.imagesEnabled,
     tablesEnabled: cfg.tablesEnabled,
-    visionModel: cfg.geminiVisionModel,
+    visionModel: resolveVisionModel(cfg),
     ...override,
   };
 }
