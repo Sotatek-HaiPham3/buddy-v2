@@ -27,10 +27,11 @@ function partsToContent(parts: ContentPart[]): OaiContent[] {
 }
 
 function buildMessages(parts: ContentPart[], callOpts?: GenerateOpts) {
+  const systemContent =
+    callOpts?.systemInstruction ??
+    (callOpts?.responseSchema ? 'Return only valid JSON.' : undefined);
   return [
-    ...(callOpts?.systemInstruction
-      ? [{ role: 'system', content: callOpts.systemInstruction }]
-      : []),
+    ...(systemContent ? [{ role: 'system', content: systemContent }] : []),
     { role: 'user', content: partsToContent(parts) },
   ];
 }
@@ -53,6 +54,9 @@ export function createRealOpenAI(opts: RealOpenAIOpts): GeminiClient {
         messages: buildMessages(parts, callOpts),
         ...(callOpts?.maxOutputTokens !== undefined
           ? { max_completion_tokens: callOpts.maxOutputTokens }
+          : {}),
+        ...(callOpts?.responseSchema
+          ? { response_format: { type: 'json_object' as const } }
           : {}),
       }),
     });
@@ -95,6 +99,9 @@ export function createRealOpenAI(opts: RealOpenAIOpts): GeminiClient {
         messages: buildMessages(parts, callOpts),
         ...(callOpts?.maxOutputTokens !== undefined
           ? { max_completion_tokens: callOpts.maxOutputTokens }
+          : {}),
+        ...(callOpts?.responseSchema
+          ? { response_format: { type: 'json_object' as const } }
           : {}),
       }),
     });

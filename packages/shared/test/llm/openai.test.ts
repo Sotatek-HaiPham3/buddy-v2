@@ -113,4 +113,45 @@ describe('createRealOpenAI', () => {
     const gen = client.generateStream(['hi']);
     await expect(gen.next()).rejects.toThrow('OpenAI stream failed: 401');
   });
+
+  describe('responseSchema / response_format', () => {
+    function mockOkFetch() {
+      let capturedBody: Record<string, unknown> = {};
+      const fetch = vi.fn().mockImplementation(async (_url: string, init?: RequestInit) => {
+        capturedBody = JSON.parse(init?.body as string) as Record<string, unknown>;
+        return new Response(
+          JSON.stringify({ choices: [{ message: { content: '{}' } }], usage: {} }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        );
+      }) as never;
+      return { fetch, getBody: () => capturedBody };
+    }
+
+    it('includes response_format json_object when responseSchema is set', async () => {
+      const { fetch, getBody } = mockOkFetch();
+      globalThis.fetch = fetch;
+      const client = createRealOpenAI({ apiKey: 'x', defaultModel: 'gpt-5.4-nano' });
+      await client.generate(['give me json'], { responseSchema: { type: 'object' } });
+      expect(getBody().response_format).toEqual({ type: 'json_object' });
+    });
+
+    it('omits response_format when responseSchema is NOT set', async () => {
+      const { fetch, getBody } = mockOkFetch();
+      globalThis.fetch = fetch;
+      const client = createRealOpenAI({ apiKey: 'x', defaultModel: 'gpt-5.4-nano' });
+      await client.generate(['hello']);
+      expect(getBody().response_format).toBeUndefined();
+    });
+
+    it('injects system message with "json" when responseSchema set and no systemInstruction', async () => {
+      const { fetch, getBody } = mockOkFetch();
+      globalThis.fetch = fetch;
+      const client = createRealOpenAI({ apiKey: 'x', defaultModel: 'gpt-5.4-nano' });
+      await client.generate(['give me json'], { responseSchema: { type: 'object' } });
+      const messages = getBody().messages as Array<{ role: string; content: string }>;
+      const sys = messages.find(m => m.role === 'system');
+      expect(sys).toBeDefined();
+      expect(sys!.content.toLowerCase()).toContain('json');
+    });
+  });
 });
