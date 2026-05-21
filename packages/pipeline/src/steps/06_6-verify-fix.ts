@@ -31,7 +31,11 @@ export async function verifyAndFix(entries: FlatTocEntry[], pages: RawPage[], op
     const r = await opts.gemini.generate([fixMappingPrompt(pendingWrong, tagged)], { maxOutputTokens: 4096 });
     const fixed = physicalMappingResponseSchema.parse(extractJson(r.text));
     const byStruct = new Map(fixed.map(f => [f.structure, parsePhysicalIndexTag(f.physical_index)]));
-    working = working.map(e => byStruct.has(e.structure) ? { ...e, physical_index: byStruct.get(e.structure) } : e);
+    working = working.map(e => {
+      if (!byStruct.has(e.structure)) return e;
+      const phys = byStruct.get(e.structure);
+      return phys !== undefined ? { ...e, physical_index: phys } : { ...e };
+    });
     const v = await verifyOnce(working.filter(e => e.physical_index !== undefined), pages, opts.gemini);
     pendingWrong = working.filter(e => e.physical_index !== undefined && !v.correctStructs.has(e.structure));
   }

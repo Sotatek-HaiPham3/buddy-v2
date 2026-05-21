@@ -29,5 +29,5 @@ export async function mapPhysical(toc: FlatTocEntry[], pages: RawPage[], opts: O
   }
   const offset = mostCommon(diffs);
   if (offset === null) return toc.map(e => ({ ...e }));
-  return toc.map(e => ({ ...e, physical_index: e.page !== undefined ? e.page + offset : undefined }));
+  return toc.map(e => e.page !== undefined ? { ...e, physical_index: e.page + offset } : { ...e });
 }
