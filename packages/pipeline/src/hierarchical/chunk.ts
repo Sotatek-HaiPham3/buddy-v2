@@ -6,10 +6,12 @@ export function chunkPages(pages: RawPage[], tokenBudget: number): Chunk[] {
   const chunks: Chunk[] = [];
   let i = 0;
   while (i < pages.length) {
-    let tokens = 0;
     const buf: RawPage[] = [];
+    let tokens = 0;
     let j = i;
-    while (j < pages.length && (tokens === 0 || tokens + (pages[j]?.tokenCount ?? 0) <= tokenBudget)) {
+    // Always include at least 2 pages so overlap is possible (unless at end)
+    const minJ = Math.min(i + 2, pages.length);
+    while (j < pages.length && (j < minJ || tokens + (pages[j]?.tokenCount ?? 0) <= tokenBudget)) {
       buf.push(pages[j]!);
       tokens += pages[j]?.tokenCount ?? 0;
       j++;
