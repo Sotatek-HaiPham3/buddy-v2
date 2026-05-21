@@ -44,6 +44,20 @@ describe('buildTree', () => {
     );
     expect(tree).toHaveLength(1);
   });
+
+  it('produces degenerate single-page end_index when siblings share the same physical_index', () => {
+    // buildTree sorts by physical_index, so regressing physical values get reordered.
+    // The only way end_index < start_index can occur after sort is duplicate physical_index:
+    // next.start_index - 1 == current.start_index - 1 < current.start_index.
+    const flat: FlatTocEntry[] = [
+      { structure: '1', title: 'A', physical_index: 5 },
+      { structure: '2', title: 'B', physical_index: 5 },   // same page → after sort still adjacent; end = 5-1 = 4 < 5
+    ];
+    const tree = buildTree(flat, 20);
+    // After sort both have start=5; first node's computed end = next.start-1 = 4 which < start=5 → clamped to 5
+    expect(tree[0]?.start_index).toBe(5);
+    expect(tree[0]?.end_index).toBe(5);   // degenerate, not 4 (which would be 5-1)
+  });
 });
 
 describe('buildTree — doc_page propagation', () => {
