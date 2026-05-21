@@ -1,0 +1,28 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`golden: TOC without page numbers > falls back to no-toc path and produces a valid DocOutput tree 1`] = `
+{
+  "doc_description": "",
+  "doc_name": "doc.pdf",
+  "structure": [
+    {
+      "end_index": 3,
+      "images": [],
+      "nodes": [],
+      "start_index": 3,
+      "summary": undefined,
+      "tables": [],
+      "title": "Intro",
+    },
+    {
+      "end_index": 4,
+      "images": [],
+      "nodes": [],
+      "start_index": 4,
+      "summary": undefined,
+      "tables": [],
+      "title": "Body",
+    },
+  ],
+}
+`;
