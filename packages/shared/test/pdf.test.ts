@@ -1,7 +1,9 @@
 import { PNG } from 'pngjs';
+import { PDFDocument } from 'pdf-lib';
 import { describe, expect, it } from 'vitest';
 import {
   cropPng,
+  extractEmbeddedImages,
   getPageCount,
   getPageImage,
   getPageText,
@@ -106,6 +108,29 @@ describe('pdf wrapper', () => {
     await expect(cropPng(rendered.png, { x: 0, y: 0, w: 10, h: -1 })).rejects.toThrow(
       'bbox.h must be greater than 0',
     );
+  });
+
+  it('extractEmbeddedImages returns image bytes even when preserve-images JSON omits them', async () => {
+    const pdf = await PDFDocument.create();
+    const page = pdf.addPage([200, 200]);
+    const png = new PNG({ width: 4, height: 3 });
+    for (let i = 0; i < png.data.length; i += 4) {
+      png.data[i] = 255;
+      png.data[i + 1] = 0;
+      png.data[i + 2] = 0;
+      png.data[i + 3] = 255;
+    }
+    const embedded = PNG.sync.write(png);
+    const image = await pdf.embedPng(embedded);
+    page.drawImage(image, { x: 20, y: 30, width: 40, height: 50 });
+
+    const doc = openPdf(Buffer.from(await pdf.save()));
+    const images = extractEmbeddedImages(doc, 0);
+
+    expect(images).toHaveLength(1);
+    expect(images[0]?.mime).toBe('image/png');
+    expect(images[0]?.bytes.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+    expect(images[0]?.bbox).toEqual({ x: 20, y: 120, w: 40, h: 50 });
   });
 
   it('throws on out-of-range page index', async () => {

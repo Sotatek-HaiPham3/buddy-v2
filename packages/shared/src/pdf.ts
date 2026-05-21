@@ -117,7 +117,27 @@ export interface EmbeddedImage {
 export function extractEmbeddedImages(doc: PdfDoc, pageIndex: number): EmbeddedImage[] {
   assertPageIndex(doc, pageIndex);
   const page = doc._doc.loadPage(pageIndex);
-  const json = page.toStructuredText('preserve-images').asJSON();
+  const structuredText = page.toStructuredText('preserve-images');
+  const out: EmbeddedImage[] = [];
+
+  structuredText.walk({
+    onImageBlock(bbox, _transform, image) {
+      const pixmap = image.toPixmap();
+      out.push({
+        bbox: {
+          x: bbox[0],
+          y: bbox[1],
+          w: bbox[2] - bbox[0],
+          h: bbox[3] - bbox[1],
+        },
+        bytes: Buffer.from(pixmap.asPNG()),
+        mime: 'image/png',
+      });
+    },
+  });
+  if (out.length > 0) return out;
+
+  const json = structuredText.asJSON();
   const data = JSON.parse(json) as {
     blocks?: {
       type?: string;
@@ -125,7 +145,7 @@ export function extractEmbeddedImages(doc: PdfDoc, pageIndex: number): EmbeddedI
       image?: { data?: string; mimeType?: string };
     }[];
   };
-  const out: EmbeddedImage[] = [];
+
   for (const b of data.blocks ?? []) {
     if (b.type === 'image' && b.bbox && b.image?.data && b.image.mimeType) {
       out.push({
@@ -135,5 +155,6 @@ export function extractEmbeddedImages(doc: PdfDoc, pageIndex: number): EmbeddedI
       });
     }
   }
+
   return out;
 }
