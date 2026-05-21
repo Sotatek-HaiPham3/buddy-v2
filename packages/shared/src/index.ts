@@ -1,6 +1,7 @@
 export * from './config.js';
 export * from './ids.js';
 export * from './llm/cache.js';
+export * from './llm/client.js';
 export * from './llm/gemini.js';
 export * from './llm/openai.js';
 export * from './llm/pool.js';
