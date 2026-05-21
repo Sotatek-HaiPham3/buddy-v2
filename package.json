@@ -16,7 +16,10 @@
     "format": "biome format --write .",
     "clean": "pnpm -r exec rm -rf dist node_modules .tsbuildinfo",
     "build-index": "pnpm --filter @buddy/build-index start",
-    "serve": "pnpm --filter @buddy/serve start"
+    "serve": "pnpm --filter @buddy/serve start",
+    "dev:server": "pnpm -F @buddy/serve dev",
+    "dev:web": "pnpm -F @buddy/web dev",
+    "dev": "pnpm -r --parallel --filter @buddy/serve --filter @buddy/web dev"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

@@ -17,7 +17,8 @@ async function main(): Promise<void> {
     onChange: (topic: string) => logger.info({ topic }, 'tree cache reloaded'),
   });
   const gemini = createRealGemini({ apiKey: cfg.geminiApiKey, defaultModel: cfg.geminiModel });
-  const webDist = path.resolve(fileURLToPath(import.meta.url), '../../../../packages/web/dist');
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const webDist = path.resolve(here, '../../../packages/web/dist');
   const app = createApp({
     dataDir: cfg.dataDir,
     convs: conversationsRepo(db),
