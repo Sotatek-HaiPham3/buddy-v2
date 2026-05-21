@@ -26,6 +26,11 @@ export async function addSummaries(tree: TreeNode[], pages: RawPage[], opts: Opt
     return r.text.trim();
   })));
   const byId = new Map(all.map((n, i) => [n.node_id, summaries[i] ?? '']));
-  const attach = (n: TreeNode): TreeNode => ({ ...n, summary: byId.get(n.node_id) || undefined, nodes: n.nodes.map(attach) });
+  const attach = (n: TreeNode): TreeNode => {
+    const summary = byId.get(n.node_id) || undefined;
+    const result: TreeNode = { ...n, nodes: n.nodes.map(attach) };
+    if (summary) result.summary = summary;
+    return result;
+  };
   return tree.map(attach);
 }
