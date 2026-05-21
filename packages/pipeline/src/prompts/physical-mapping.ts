@@ -4,6 +4,7 @@ export const physicalMappingPrompt = (tocJson: FlatTocEntry[], taggedPages: stri
 Add the physical_index to the table of contents.
 
 The provided pages contain tags like <physical_index_X> to indicate page location.
+Use the tag values for physical_index. Ignore any printed page numbers in page text (those are logical page numbers and are not requested here).
 
 Response format:
 [

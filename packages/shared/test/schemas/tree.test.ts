@@ -88,6 +88,99 @@ describe('treeNodeSchema', () => {
     expect(node.doc_page_start).toBeUndefined();
     expect(node.doc_page_end).toBeUndefined();
   });
+
+  it('accepts valid doc_page range', () => {
+    const node = treeNodeSchema.parse({
+      title: 'Chapter 1',
+      start_index: 1,
+      end_index: 2,
+      node_id: 'n1',
+      nodes: [],
+      images: [],
+      tables: [],
+      doc_page_start: 6,
+      doc_page_end: 6,
+    });
+    expect(node.doc_page_start).toBe(6);
+    expect(node.doc_page_end).toBe(6);
+  });
+
+  it('rejects invalid doc_page range', () => {
+    expect(() =>
+      treeNodeSchema.parse({
+        title: 'Bad',
+        start_index: 1,
+        end_index: 2,
+        node_id: 'n1',
+        nodes: [],
+        images: [],
+        tables: [],
+        doc_page_start: 7,
+        doc_page_end: 6,
+      }),
+    ).toThrow();
+  });
+
+  it('accepts optional logical_start and logical_end', () => {
+    const node = treeNodeSchema.parse({
+      title: 'Chapter 1',
+      start_index: 1,
+      end_index: 2,
+      node_id: 'n1',
+      nodes: [],
+      images: [],
+      tables: [],
+      logical_start: 5,
+      logical_end: 6,
+    });
+    expect(node.logical_start).toBe(5);
+    expect(node.logical_end).toBe(6);
+  });
+
+  it('accepts TreeNode without logical fields', () => {
+    const node = treeNodeSchema.parse({
+      title: 'Chapter 1',
+      start_index: 1,
+      end_index: 2,
+      node_id: 'n1',
+      nodes: [],
+      images: [],
+      tables: [],
+    });
+    expect(node.logical_start).toBeUndefined();
+    expect(node.logical_end).toBeUndefined();
+  });
+
+  it('rejects node with logical_end < logical_start', () => {
+    expect(() =>
+      treeNodeSchema.parse({
+        title: 'Bad',
+        start_index: 1,
+        end_index: 2,
+        node_id: 'n1',
+        nodes: [],
+        images: [],
+        tables: [],
+        logical_start: 10,
+        logical_end: 9,
+      }),
+    ).toThrow();
+  });
+
+  it('accepts node with only logical_start', () => {
+    const node = treeNodeSchema.parse({
+      title: 'Chapter 1',
+      start_index: 1,
+      end_index: 2,
+      node_id: 'n1',
+      nodes: [],
+      images: [],
+      tables: [],
+      logical_start: 10,
+    });
+    expect(node.logical_start).toBe(10);
+    expect(node.logical_end).toBeUndefined();
+  });
 });
 
 describe('docOutputSchema', () => {

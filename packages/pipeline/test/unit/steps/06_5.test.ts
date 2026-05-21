@@ -14,4 +14,40 @@ describe('validateIndices', () => {
     const out = validateIndices([{ structure: '1', title: 'A', physical_index: 0 }], 10);
     expect(out[0]?.physical_index).toBeUndefined();
   });
+
+  it('keeps entries but clears logical when logical sequence regresses', () => {
+    const out = validateIndices(
+      [
+        { structure: '1', title: 'A', page: 2, physical_index: 5 },
+        { structure: '2', title: 'B', page: 1, physical_index: 14 },
+      ],
+      20,
+    );
+    expect(out).toHaveLength(2);
+    expect(out[1]?.physical_index).toBe(14);
+    expect(out[1]?.page).toBeUndefined();
+  });
+
+  it('leaves logical untouched when sequence is monotonic', () => {
+    const out = validateIndices(
+      [
+        { structure: '1', title: 'A', page: 1, physical_index: 5 },
+        { structure: '2', title: 'B', page: 5, physical_index: 14 },
+      ],
+      20,
+    );
+    expect(out[1]?.page).toBe(5);
+  });
+
+  it('clears logical page when it is below 1', () => {
+    const out = validateIndices([{ structure: '1', title: 'A', page: 0, physical_index: 5 }], 10);
+    expect(out[0]?.page).toBeUndefined();
+    expect(out[0]?.physical_index).toBe(5);
+  });
+
+  it('clears logical page when it exceeds page count', () => {
+    const out = validateIndices([{ structure: '1', title: 'A', page: 11, physical_index: 5 }], 10);
+    expect(out[0]?.page).toBeUndefined();
+    expect(out[0]?.physical_index).toBe(5);
+  });
 });

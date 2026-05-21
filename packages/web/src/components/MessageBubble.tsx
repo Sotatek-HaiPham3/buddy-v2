@@ -26,6 +26,7 @@ export function MessageBubble({
               key={`${c.doc}-${i}`}
               doc={c.doc}
               pages={c.pages}
+              logicalPages={c.logical_pages}
               onClick={(doc, page) => onCitationClick({ doc, page })}
             />
           ))}

@@ -26,6 +26,7 @@ export function buildTree(toc: FlatTocEntry[], totalPages: number): TreeNode[] {
       _appearStart: e.appear_start ?? 'yes',
     };
     if (e.page !== undefined) {
+      node.logical_start = e.page;
       node.doc_page_start = e.page;
     }
     return node;
@@ -41,6 +42,10 @@ export function buildTree(toc: FlatTocEntry[], totalPages: number): TreeNode[] {
     } else {
       cur.end_index = next._appearStart === 'no' ? next.start_index : next.start_index - 1;
       if (cur.end_index < cur.start_index) cur.end_index = cur.start_index;
+      if (cur.logical_start !== undefined && next.logical_start !== undefined) {
+        cur.logical_end = next._appearStart === 'no' ? next.logical_start : next.logical_start - 1;
+        if (cur.logical_end < cur.logical_start) cur.logical_end = cur.logical_start;
+      }
       if (cur.doc_page_start !== undefined && next.doc_page_start !== undefined) {
         cur.doc_page_end = next._appearStart === 'no' ? next.doc_page_start : next.doc_page_start - 1;
         if (cur.doc_page_end < cur.doc_page_start) cur.doc_page_end = cur.doc_page_start;
@@ -64,14 +69,21 @@ export function buildTree(toc: FlatTocEntry[], totalPages: number): TreeNode[] {
     if (node.nodes.length > 0) {
       let maxEnd = 0;
       let maxDocPageEnd: number | undefined;
+      let maxLogicalEnd: number | undefined;
       for (const c of node.nodes) {
         const w = c as unknown as WorkingNode;
         if (w.end_index > maxEnd) maxEnd = w.end_index;
+        if (w.logical_end !== undefined && (maxLogicalEnd === undefined || w.logical_end > maxLogicalEnd)) {
+          maxLogicalEnd = w.logical_end;
+        }
         if (w.doc_page_end !== undefined && (maxDocPageEnd === undefined || w.doc_page_end > maxDocPageEnd)) {
           maxDocPageEnd = w.doc_page_end;
         }
       }
       node.end_index = Math.max(node.end_index, maxEnd);
+      if (maxLogicalEnd !== undefined) {
+        node.logical_end = node.logical_end !== undefined ? Math.max(node.logical_end, maxLogicalEnd) : maxLogicalEnd;
+      }
       if (maxDocPageEnd !== undefined) node.doc_page_end = maxDocPageEnd;
     }
   }

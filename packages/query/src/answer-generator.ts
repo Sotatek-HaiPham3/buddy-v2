@@ -24,13 +24,19 @@ export async function* generateAnswer(opts: {
     }
     yield { type: 'token', delta: chunk.delta };
   }
-  const citations: Citation[] = opts.retrieved.map((r) => ({
-    doc: r.doc_name,
-    node_ids: [r.node_id],
-    pages: [r.page_range[0], r.page_range[1]].filter((v, i, arr) => arr.indexOf(v) === i),
-    ...(r.doc_page_range !== undefined
-      ? { doc_pages: [r.doc_page_range[0], r.doc_page_range[1]].filter((v, i, arr) => arr.indexOf(v) === i) }
-      : {}),
-  }));
+  const citations: Citation[] = opts.retrieved.map((r) => {
+    const logicalRange = r.logical_page_range ?? r.doc_page_range;
+    return {
+      doc: r.doc_name,
+      node_ids: [r.node_id],
+      pages: [r.page_range[0], r.page_range[1]].filter((v, i, arr) => arr.indexOf(v) === i),
+      ...(logicalRange !== undefined
+        ? { logical_pages: [logicalRange[0], logicalRange[1]].filter((v, i, arr) => arr.indexOf(v) === i) }
+        : {}),
+      ...(r.doc_page_range !== undefined
+        ? { doc_pages: [r.doc_page_range[0], r.doc_page_range[1]].filter((v, i, arr) => arr.indexOf(v) === i) }
+        : {}),
+    };
+  });
   yield { type: 'citations', citations };
 }

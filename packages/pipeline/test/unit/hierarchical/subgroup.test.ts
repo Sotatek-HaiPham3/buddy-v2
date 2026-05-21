@@ -16,6 +16,16 @@ describe('subgroupAgent', () => {
     expect(out).toEqual([['Intro', 5], ['Bg', 7]]);
   });
 
+  it('returns [title, logical|null, physical] tuples', async () => {
+    const pages: RawPage[] = [{ pageNumber: 5, text: 'x', tokenCount: 0 }];
+    const tagged = tagPages(pages);
+    const responses = new Map([
+      [hashPrompt([subgroupHeadingsPrompt(tagged)]), { text: '[["Intro", 1, 5], ["Bg", null, 7]]' }],
+    ]);
+    const out = await subgroupAgent({ pages }, { gemini: createStubGemini({ responses }) });
+    expect(out).toEqual([['Intro', 1, 5], ['Bg', null, 7]]);
+  });
+
   it('returns [] on error', async () => {
     const pages: RawPage[] = [{ pageNumber: 1, text: 'x', tokenCount: 0 }];
     const gemini = createStubGemini({ responses: new Map() });

@@ -36,7 +36,15 @@ async function splitOne(node: TreeNode, pages: RawPage[], opts: Opts): Promise<T
       subgroupTokenSize: opts.subgroupTokenSize,
       maxRetrievalsPerMaster: opts.maxRetrievalsPerMaster,
     });
-    entries = result.map(([s, t, p]) => ({ structure: s, title: t, physical_index: p }));
+    entries = result
+      .map((row) => {
+        const [structure, title, ...rest] = row;
+        const physical = rest.length >= 2 ? rest[1] : rest[0];
+        const physicalIndex = typeof physical === 'number' ? physical : Number.NaN;
+        if (!Number.isFinite(physicalIndex) || physicalIndex < 1) return null;
+        return { structure, title, physical_index: physicalIndex };
+      })
+      .filter((e): e is { structure: string; title: string; physical_index: number } => e !== null);
   } else {
     const tagged = tagPages(slice);
     const r = await opts.gemini.generate([splitLargePrompt(tagged)], { maxOutputTokens: 8192 });

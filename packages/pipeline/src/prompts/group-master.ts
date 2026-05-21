@@ -1,4 +1,7 @@
-export const groupMasterPrompt = (subgroupResults: [string, number][][], retrievedPages?: string): string => `You are merging heading lists from sub-groups into a structured TOC.
+export const groupMasterPrompt = (
+  subgroupResults: ([string, number] | [string, number | null, number])[][],
+  retrievedPages?: string,
+): string => `You are merging heading lists from sub-groups into a structured TOC.
 
 Sub-group outputs:
 ${subgroupResults.map((r, i) => `Sub-group ${i + 1}: ${JSON.stringify(r)}`).join('\n')}
@@ -11,6 +14,6 @@ If you need specific page content to resolve hierarchy ambiguity, output:
 
 Otherwise output the merged structure as a JSON array:
 [
-  ["1",   "Introduction", 85],
-  ["1.1", "Background",   87]
+  ["1",   "Introduction", 1,    85],
+  ["1.1", "Background",   null, 87]
 ]`;

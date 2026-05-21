@@ -18,6 +18,8 @@ export interface TreeNode {
   title: string;
   start_index: number;
   end_index: number;
+  logical_start?: number;
+  logical_end?: number;
   node_id: string;
   summary?: string;
   doc_page_start?: number;
@@ -33,6 +35,8 @@ const _treeNodeSchema: z.ZodType<unknown> = z.lazy(() =>
       title: z.string(),
       start_index: z.number().int().positive(),
       end_index: z.number().int().positive(),
+      logical_start: z.number().int().positive().optional(),
+      logical_end: z.number().int().positive().optional(),
       node_id: z.string(),
       summary: z.string().optional(),
       doc_page_start: z.number().int().positive().optional(),
@@ -43,6 +47,18 @@ const _treeNodeSchema: z.ZodType<unknown> = z.lazy(() =>
     })
     .refine((n) => n.end_index >= n.start_index, {
       message: 'end_index must be >= start_index',
+    })
+    .refine((n) => {
+      if (n.doc_page_start === undefined || n.doc_page_end === undefined) return true;
+      return n.doc_page_end >= n.doc_page_start;
+    }, {
+      message: 'doc_page_end must be >= doc_page_start',
+    })
+    .refine((n) => {
+      if (n.logical_start === undefined || n.logical_end === undefined) return true;
+      return n.logical_end >= n.logical_start;
+    }, {
+      message: 'logical_end must be >= logical_start',
     }),
 );
 

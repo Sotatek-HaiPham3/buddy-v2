@@ -89,4 +89,38 @@ describe('buildTree — doc_page propagation', () => {
     expect(tree[0].doc_page_end).toBe(8);   // Section B doc_page_end = 9-1 = 8
     expect(tree[0].doc_page_start).toBe(5);
   });
+
+  it('carries logical_start from FlatTocEntry.page and computes logical_end from next sibling', () => {
+    const toc: FlatTocEntry[] = [
+      entry({ structure: '1', title: 'A', physical_index: 5, page: 1 }),
+      entry({ structure: '2', title: 'B', physical_index: 14, page: 10 }),
+    ];
+    const tree = buildTree(toc, 20);
+    expect(tree[0].logical_start).toBe(1);
+    expect(tree[0].logical_end).toBe(9);
+    expect(tree[1].logical_start).toBe(10);
+    expect(tree[1].logical_end).toBeUndefined();
+  });
+
+  it('omits logical fields when FlatTocEntry has only physical_index', () => {
+    const toc: FlatTocEntry[] = [
+      entry({ structure: '1', title: 'A', physical_index: 5 }),
+      entry({ structure: '2', title: 'B', physical_index: 14 }),
+    ];
+    const tree = buildTree(toc, 20);
+    expect(tree[0].logical_start).toBeUndefined();
+    expect(tree[0].logical_end).toBeUndefined();
+    expect(tree[1].logical_start).toBeUndefined();
+    expect(tree[1].logical_end).toBeUndefined();
+  });
+
+  it('omits logical_end when next sibling lacks logical basis', () => {
+    const toc: FlatTocEntry[] = [
+      entry({ structure: '1', title: 'A', physical_index: 5, page: 1 }),
+      entry({ structure: '2', title: 'B', physical_index: 14 }),
+    ];
+    const tree = buildTree(toc, 20);
+    expect(tree[0].logical_start).toBe(1);
+    expect(tree[0].logical_end).toBeUndefined();
+  });
 });

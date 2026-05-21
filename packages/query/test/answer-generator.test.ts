@@ -111,4 +111,53 @@ describe('generateAnswer', () => {
       { type: 'citations'; citations: Citation[] } | undefined;
     expect(citEvent!.citations[0].doc_pages).toBeUndefined();
   });
+
+  it('emits logical_pages when logical_page_range is present', async () => {
+    const retrieved: RetrievedNode[] = [{
+      doc_id: 'd1',
+      doc_name: 'Chapter01.pdf',
+      node_id: 'n1',
+      title: 'OXEN',
+      page_range: [40, 40],
+      logical_page_range: [9, 9],
+      text: 'Oxen are draft animals.',
+      image_captions: [],
+      tables: [],
+    }];
+    const prompt = answerPrompt('What are oxen?', retrieved, []);
+    const responses = new Map();
+    responses.set(hashPrompt([prompt]), { text: 'Oxen are draft animals.' });
+    const gemini = createStubGemini({ responses });
+    const chunks: unknown[] = [];
+    for await (const chunk of generateAnswer({ gemini, query: 'What are oxen?', retrieved, history: [] })) {
+      chunks.push(chunk);
+    }
+    const citEvent = chunks.find((c: unknown) => (c as { type: string }).type === 'citations') as
+      { type: 'citations'; citations: Citation[] } | undefined;
+    expect(citEvent!.citations[0].logical_pages).toEqual([9]);
+  });
+
+  it('omits logical_pages when neither logical nor doc_page range is present', async () => {
+    const retrieved: RetrievedNode[] = [{
+      doc_id: 'd1',
+      doc_name: 'Chapter01.pdf',
+      node_id: 'n1',
+      title: 'OXEN',
+      page_range: [40, 40],
+      text: 'Oxen are draft animals.',
+      image_captions: [],
+      tables: [],
+    }];
+    const prompt = answerPrompt('What are oxen?', retrieved, []);
+    const responses = new Map();
+    responses.set(hashPrompt([prompt]), { text: 'Oxen are draft animals.' });
+    const gemini = createStubGemini({ responses });
+    const chunks: unknown[] = [];
+    for await (const chunk of generateAnswer({ gemini, query: 'What are oxen?', retrieved, history: [] })) {
+      chunks.push(chunk);
+    }
+    const citEvent = chunks.find((c: unknown) => (c as { type: string }).type === 'citations') as
+      { type: 'citations'; citations: Citation[] } | undefined;
+    expect(citEvent!.citations[0].logical_pages).toBeUndefined();
+  });
 });

@@ -53,4 +53,43 @@ describe('outputJson', () => {
     const read = JSON.parse(await fs.readFile(path.join(dir, 'out.json'), 'utf8'));
     expect(read.doc_name).toBe('a.pdf');
   });
+
+  it('preserves logical_start/logical_end on root and child in written JSON', async () => {
+    const tree: TreeNode[] = [{
+      title: 'Root',
+      start_index: 1,
+      end_index: 20,
+      logical_start: 1,
+      logical_end: 12,
+      node_id: 'old-root',
+      nodes: [{
+        title: 'Child',
+        start_index: 5,
+        end_index: 10,
+        logical_start: 3,
+        logical_end: 6,
+        node_id: 'old-child',
+        nodes: [],
+        images: [],
+        tables: [],
+      }],
+      images: [],
+      tables: [],
+    }];
+
+    const outPath = path.join(dir, 'logical.json');
+    await outputJson(tree, {
+      docId: 'doc_logical',
+      docName: 'logical.pdf',
+      outPath,
+      gemini: createStubGemini({ responses: new Map() }),
+      generateDescription: false,
+    });
+
+    const written = JSON.parse(await fs.readFile(outPath, 'utf8'));
+    expect(written.structure[0]?.logical_start).toBe(1);
+    expect(written.structure[0]?.logical_end).toBe(12);
+    expect(written.structure[0]?.nodes[0]?.logical_start).toBe(3);
+    expect(written.structure[0]?.nodes[0]?.logical_end).toBe(6);
+  });
 });

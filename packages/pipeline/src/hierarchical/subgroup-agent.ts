@@ -5,7 +5,9 @@ import { subgroupHeadingsPrompt } from '../prompts/subgroup-headings.js';
 import { subgroupHeadingsResponseSchema } from '../schemas.js';
 import type { Chunk } from './chunk.js';
 
-export type Heading = [string, number];
+export type LegacyHeading = [string, number];
+export type HeadingWithLogical = [string, number | null, number];
+export type Heading = LegacyHeading | HeadingWithLogical;
 
 interface Opts { gemini: GeminiClient; }
 
