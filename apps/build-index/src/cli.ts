@@ -22,6 +22,10 @@ export function buildCli(): Command {
       summaries?: boolean; hierarchical?: boolean; images?: boolean; tables?: boolean;
     }) => {
       const cfg = loadConfig();
+      const rootCwd = process.env.INIT_CWD ?? process.cwd();
+      if (!path.isAbsolute(cfg.dataDir)) {
+        cfg.dataDir = path.resolve(rootCwd, cfg.dataDir);
+      }
       const logger = createLogger({ level: cfg.logLevel });
       const override = {
         force: !!opts.force,

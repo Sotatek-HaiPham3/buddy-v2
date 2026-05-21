@@ -7,6 +7,10 @@ import { createLogger, createRealGemini, createRealOpenAI, loadConfig, type Conf
 
 async function main(): Promise<void> {
   const cfg: Config = loadConfig();
+  const rootCwd = process.env.INIT_CWD ?? process.cwd();
+  if (!path.isAbsolute(cfg.dataDir)) {
+    cfg.dataDir = path.resolve(rootCwd, cfg.dataDir);
+  }
   const logger = createLogger({ level: cfg.logLevel });
   const dbPath = path.join(cfg.dataDir, 'buddy.sqlite');
   const db = openDb(dbPath);
