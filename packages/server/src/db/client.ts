@@ -11,6 +11,15 @@ export function openDb(filePath: string): Db {
 }
 
 export function runMigrations(db: Db): void {
-  const sqlPath = fileURLToPath(new URL('./migrations/001-init.sql', import.meta.url));
+  const baseDir = path.dirname(fileURLToPath(import.meta.url));
+  const candidates = [
+    path.join(baseDir, 'migrations', '001-init.sql'),
+    path.resolve(baseDir, '../src/db/migrations/001-init.sql'),
+    path.resolve(process.cwd(), 'packages/server/src/db/migrations/001-init.sql'),
+    path.resolve(process.cwd(), '../../packages/server/src/db/migrations/001-init.sql'),
+    path.resolve(process.cwd(), '../packages/server/src/db/migrations/001-init.sql'),
+  ];
+  const sqlPath = candidates.find((p) => fs.existsSync(p));
+  if (!sqlPath) throw new Error(`migration file not found: ${candidates.join(', ')}`);
   db.exec(fs.readFileSync(sqlPath, 'utf8'));
 }
