@@ -84,6 +84,30 @@ describe('pdf wrapper', () => {
     expect(parsed.height).toBe(rendered.heightPx);
   });
 
+  it('cropPng rejects non-finite bbox values', async () => {
+    const doc = await openSamplePdf();
+    const rendered = renderPage(doc, 0, 2.0);
+
+    await expect(cropPng(rendered.png, { x: Number.NaN, y: 0, w: 10, h: 10 })).rejects.toThrow(
+      'bbox.x must be a finite number',
+    );
+    await expect(
+      cropPng(rendered.png, { x: 0, y: Number.POSITIVE_INFINITY, w: 10, h: 10 }),
+    ).rejects.toThrow('bbox.y must be a finite number');
+  });
+
+  it('cropPng rejects zero or negative bbox size', async () => {
+    const doc = await openSamplePdf();
+    const rendered = renderPage(doc, 0, 2.0);
+
+    await expect(cropPng(rendered.png, { x: 0, y: 0, w: 0, h: 10 })).rejects.toThrow(
+      'bbox.w must be greater than 0',
+    );
+    await expect(cropPng(rendered.png, { x: 0, y: 0, w: 10, h: -1 })).rejects.toThrow(
+      'bbox.h must be greater than 0',
+    );
+  });
+
   it('throws on out-of-range page index', async () => {
     const doc = await openSamplePdf();
     expect(() => getPageText(doc, 99)).toThrow();

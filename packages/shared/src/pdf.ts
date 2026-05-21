@@ -67,7 +67,27 @@ export interface PixelBbox {
   h: number;
 }
 
+function assertFiniteNumber(name: string, value: number): void {
+  if (!Number.isFinite(value)) {
+    throw new RangeError(`${name} must be a finite number`);
+  }
+}
+
+function assertValidPixelBbox(bbox: PixelBbox): void {
+  assertFiniteNumber('bbox.x', bbox.x);
+  assertFiniteNumber('bbox.y', bbox.y);
+  assertFiniteNumber('bbox.w', bbox.w);
+  assertFiniteNumber('bbox.h', bbox.h);
+  if (bbox.w <= 0) {
+    throw new RangeError('bbox.w must be greater than 0');
+  }
+  if (bbox.h <= 0) {
+    throw new RangeError('bbox.h must be greater than 0');
+  }
+}
+
 export async function cropPng(png: Buffer, bbox: PixelBbox): Promise<Buffer> {
+  assertValidPixelBbox(bbox);
   const src = PNG.sync.read(png);
   const maxLeft = Math.max(0, src.width - 1);
   const maxTop = Math.max(0, src.height - 1);
