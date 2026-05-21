@@ -22,7 +22,9 @@ export async function groupMaster(
       [groupMasterPrompt(subgroupResults, retrieved)],
       { maxOutputTokens: 4096 },
     );
-    const parsed = masterMergeResponseSchema.parse(extractJson(r.text));
+    const raw = extractJson(r.text);
+    const normalized = Array.isArray(raw) ? raw : [raw];
+    const parsed = masterMergeResponseSchema.parse(normalized);
     const action = parsed.find(p => !Array.isArray(p)) as { action: 'retrieve'; pages: number[] } | undefined;
     if (action && attempt < opts.maxRetrievals) {
       const slice = action.pages.map(n => byNum.get(n)).filter((p): p is RawPage => !!p);
