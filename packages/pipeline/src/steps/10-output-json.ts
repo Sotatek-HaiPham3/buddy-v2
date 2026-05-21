@@ -20,13 +20,22 @@ function assignIds(nodes: TreeNode[]): TreeNode[] {
   return nodes.map(n => ({ ...n, node_id: nodeId(), nodes: assignIds(n.nodes) }));
 }
 
+function strip(node: TreeNode): TreeNode {
+  const clean: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(node)) {
+    if (k.startsWith('_')) continue;
+    clean[k] = k === 'nodes' ? (v as TreeNode[]).map(strip) : v;
+  }
+  return clean as unknown as TreeNode;
+}
+
 export async function outputJson(tree: TreeNode[], opts: Opts): Promise<DocOutput> {
   let description = '';
   if (opts.generateDescription && tree.length > 0) {
     const r = await opts.gemini.generate([docDescriptionPrompt(tree)], { maxOutputTokens: 256 });
     description = r.text.trim();
   }
-  const withIds = assignIds(tree);
+  const withIds = assignIds(tree).map(strip);
   const attached = attachMultimodal(withIds, {
     images: fromDescribedImages(opts.images ?? []),
     tables: fromSavedTables(opts.tables ?? []),
