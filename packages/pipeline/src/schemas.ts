@@ -28,7 +28,7 @@ export const tocTransformResponseSchema = z.object({
   table_of_contents: z.array(z.object({
     structure: z.string(),
     title: z.string(),
-    page: z.number().int().positive().nullable().optional(),
+    page: z.number().int().positive(),
   })),
 });
 
