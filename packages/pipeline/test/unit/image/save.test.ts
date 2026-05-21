@@ -39,4 +39,22 @@ describe('saveImage', () => {
       mime: 'image/png',
     });
   });
+
+  it('derives the saved image extension from mime for embedded jpeg images', async () => {
+    const image: DetectedImage = {
+      page: 4,
+      source: 'embedded',
+      bbox: { x: 5, y: 6, w: 7, h: 8 },
+      bytes: Buffer.from('original-jpeg'),
+      mime: 'image/jpeg',
+    };
+    const materialized = Buffer.from([9, 8, 7]);
+
+    const saved = await saveImage({ dir, idx: 1, image, bytes: materialized });
+
+    expect(path.basename(saved.path)).toBe('4-1.jpg');
+    expect(path.basename(saved.sidecarPath)).toBe('4-1.json');
+    const sidecar = JSON.parse(await fs.readFile(saved.sidecarPath, 'utf8'));
+    expect(sidecar.mime).toBe('image/jpeg');
+  });
 });

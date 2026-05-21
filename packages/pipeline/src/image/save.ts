@@ -9,10 +9,23 @@ interface SaveImageOpts {
   bytes: Buffer;
 }
 
+function extensionForMime(mime: string): string {
+  switch (mime) {
+    case 'image/jpeg':
+      return 'jpg';
+    case 'image/png':
+      return 'png';
+    case 'image/webp':
+      return 'webp';
+    default:
+      return 'bin';
+  }
+}
+
 export async function saveImage(opts: SaveImageOpts): Promise<SavedImage> {
   await fs.mkdir(opts.dir, { recursive: true });
   const base = `${opts.image.page}-${opts.idx}`;
-  const imagePath = path.join(opts.dir, `${base}.png`);
+  const imagePath = path.join(opts.dir, `${base}.${extensionForMime(opts.image.mime)}`);
   const sidecarPath = path.join(opts.dir, `${base}.json`);
 
   await fs.writeFile(imagePath, opts.bytes);

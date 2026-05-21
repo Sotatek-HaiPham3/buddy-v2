@@ -138,12 +138,10 @@ describe('runImagePipeline', () => {
   });
 
   it('continues without throwing when vision detection fails for a page', async () => {
-    const pdf = await makeTextPdf(
-      'This page contains text but should still fall back to the vision detector when no embedded images are found.',
-    );
+    const pdf = await makeBlankPdf();
     const doc = openPdf(pdf);
     const gemini = createStubGemini({ responses: new Map() });
-    const pages: RawPage[] = [{ pageNumber: 1, text: 'plain text page', tokenCount: 3 }];
+    const pages: RawPage[] = [{ pageNumber: 1, text: '', tokenCount: 0 }];
 
     await expect(
       runImagePipeline({
@@ -155,5 +153,26 @@ describe('runImagePipeline', () => {
         visionModel: 'vision-x',
       }),
     ).resolves.toEqual([]);
+  });
+
+  it('does not invoke vision detection on text-dense prose pages', async () => {
+    const text = 'This is an ordinary prose page with enough extracted text to rule out scanned-image fallback. '
+      .repeat(4);
+    const pdf = await makeTextPdf(text);
+    const doc = openPdf(pdf);
+    const gemini = createStubGemini({ responses: new Map() });
+    const pages: RawPage[] = [{ pageNumber: 1, text, tokenCount: 80 }];
+
+    const images = await runImagePipeline({
+      doc,
+      pages,
+      dir: await makeTempDir(),
+      gemini,
+      pool: async <T,>(fn: () => Promise<T>) => fn(),
+      visionModel: 'vision-x',
+    });
+
+    expect(images).toEqual([]);
+    expect(gemini.calls).toHaveLength(0);
   });
 });

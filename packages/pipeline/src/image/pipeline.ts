@@ -22,6 +22,14 @@ interface RunImagePipelineOpts {
   visionModel?: string;
 }
 
+const VISION_FALLBACK_MAX_TEXT_LENGTH = 40;
+const VISION_FALLBACK_MAX_TOKEN_COUNT = 8;
+
+function shouldUseVisionFallback(page: RawPage): boolean {
+  return page.text.trim().length <= VISION_FALLBACK_MAX_TEXT_LENGTH
+    && page.tokenCount <= VISION_FALLBACK_MAX_TOKEN_COUNT;
+}
+
 export async function runImagePipeline(opts: RunImagePipelineOpts): Promise<DescribedImage[]> {
   const pageCount = getPageCount(opts.doc);
   const perPageIndex = new Map<number, number>();
@@ -32,14 +40,9 @@ export async function runImagePipeline(opts: RunImagePipelineOpts): Promise<Desc
       continue;
     }
 
-    let detected: DetectedImage[] = [];
-    try {
-      detected = detectEmbeddedImages(opts.doc, page.pageNumber);
-    } catch {
-      detected = [];
-    }
+    let detected: DetectedImage[] = detectEmbeddedImages(opts.doc, page.pageNumber);
 
-    if (detected.length === 0) {
+    if (detected.length === 0 && shouldUseVisionFallback(page)) {
       try {
         const pageRender = renderPage(opts.doc, page.pageNumber - 1, 2.0);
         detected = await opts.pool(() =>
@@ -56,22 +59,18 @@ export async function runImagePipeline(opts: RunImagePipelineOpts): Promise<Desc
     }
 
     for (const image of detected) {
-      try {
-        const bytes = await materializeImageBytes(image);
-        const idx = perPageIndex.get(image.page) ?? 0;
-        perPageIndex.set(image.page, idx + 1);
-        const saved = await saveImage({ dir: opts.dir, idx, image, bytes });
-        const described = await opts.pool(() =>
-          describeImage({
-            gemini: opts.gemini,
-            image: saved,
-            ...(opts.visionModel ? { visionModel: opts.visionModel } : {}),
-          }),
-        );
-        results.push(described);
-      } catch {
-        // Continue processing remaining images/pages when one image fails.
-      }
+      const bytes = await materializeImageBytes(image);
+      const idx = perPageIndex.get(image.page) ?? 0;
+      perPageIndex.set(image.page, idx + 1);
+      const saved = await saveImage({ dir: opts.dir, idx, image, bytes });
+      const described = await opts.pool(() =>
+        describeImage({
+          gemini: opts.gemini,
+          image: saved,
+          ...(opts.visionModel ? { visionModel: opts.visionModel } : {}),
+        }),
+      );
+      results.push(described);
     }
   }
 

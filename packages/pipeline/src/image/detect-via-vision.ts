@@ -35,19 +35,19 @@ function isFiniteBox(element: RawVisualElement): element is {
 }
 
 export async function detectViaVision(opts: DetectViaVisionOpts): Promise<DetectedImage[]> {
-  try {
-    const result = await opts.gemini.generate(
-      [
-        detectImageBboxPrompt(),
-        {
-          inlineData: {
-            data: opts.pageRender.png.toString('base64'),
-            mimeType: 'image/png',
-          },
+  const result = await opts.gemini.generate(
+    [
+      detectImageBboxPrompt(),
+      {
+        inlineData: {
+          data: opts.pageRender.png.toString('base64'),
+          mimeType: 'image/png',
         },
-      ],
-      opts.visionModel ? { model: opts.visionModel } : undefined,
-    );
+      },
+    ],
+    opts.visionModel ? { model: opts.visionModel } : undefined,
+  );
+  try {
     const parsed = extractJson<RawVisualElementResponse>(result.text);
 
     return (parsed.visual_elements ?? [])

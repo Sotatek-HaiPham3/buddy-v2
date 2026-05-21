@@ -88,4 +88,13 @@ describe('detectViaVision', () => {
 
     await expect(detectViaVision({ gemini, page: 1, pageRender })).resolves.toEqual([]);
   });
+
+  it('bubbles generation failures to the caller', async () => {
+    const pageRender = makeRender();
+    const gemini = createStubGemini({ responses: new Map() });
+
+    await expect(detectViaVision({ gemini, page: 1, pageRender })).rejects.toThrow(
+      /no stub response/i,
+    );
+  });
 });

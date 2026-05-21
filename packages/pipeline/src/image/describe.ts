@@ -9,27 +9,21 @@ interface DescribeImageOpts {
 }
 
 export async function describeImage(opts: DescribeImageOpts): Promise<DescribedImage> {
-  let caption = '';
-  try {
-    const result = await opts.gemini.generate(
-      [
-        describeImagePrompt(),
-        {
-          inlineData: {
-            data: opts.image.bytes.toString('base64'),
-            mimeType: opts.image.mime,
-          },
+  const result = await opts.gemini.generate(
+    [
+      describeImagePrompt(),
+      {
+        inlineData: {
+          data: opts.image.bytes.toString('base64'),
+          mimeType: opts.image.mime,
         },
-      ],
-      opts.visionModel ? { model: opts.visionModel } : undefined,
-    );
-    caption = result.text.trim();
-  } catch {
-    caption = '';
-  }
+      },
+    ],
+    opts.visionModel ? { model: opts.visionModel } : undefined,
+  );
 
   return {
     ...opts.image,
-    caption,
+    caption: result.text.trim(),
   };
 }

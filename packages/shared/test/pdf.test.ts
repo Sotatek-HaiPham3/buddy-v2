@@ -133,6 +133,24 @@ describe('pdf wrapper', () => {
     expect(images[0]?.bbox).toEqual({ x: 20, y: 120, w: 40, h: 50 });
   });
 
+  it('extractEmbeddedImages normalizes embedded JPEGs to PNG bytes', async () => {
+    const embeddedJpeg = Buffer.from(
+      '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAACAAIDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD7V+C37O3wp1v4OeBNR1H4ZeDr/ULzQbC4ubu60C0klnle3Rnd3aMlmYkkknJJJNFFFf0xln+40P8ABH8keXiP40/V/mf/2Q==',
+      'base64',
+    );
+    const pdf = await PDFDocument.create();
+    const page = pdf.addPage([200, 200]);
+    const image = await pdf.embedJpg(Uint8Array.from(embeddedJpeg));
+    page.drawImage(image, { x: 20, y: 30, width: 40, height: 50 });
+
+    const doc = openPdf(Buffer.from(await pdf.save()));
+    const images = extractEmbeddedImages(doc, 0);
+
+    expect(images).toHaveLength(1);
+    expect(images[0]?.mime).toBe('image/png');
+    expect(images[0]?.bytes.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+  });
+
   it('throws on out-of-range page index', async () => {
     const doc = await openSamplePdf();
     expect(() => getPageText(doc, 99)).toThrow();

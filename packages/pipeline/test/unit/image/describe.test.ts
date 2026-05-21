@@ -35,4 +35,20 @@ describe('describeImage', () => {
     expect(gemini.calls[0]?.parts).toEqual([...parts]);
     expect(gemini.calls[0]?.opts).toEqual({ model: 'vision-x' });
   });
+
+  it('bubbles generation failures to the caller', async () => {
+    const image: SavedImage = {
+      page: 2,
+      idx: 1,
+      source: 'embedded',
+      bbox: { x: 1, y: 2, w: 3, h: 4 },
+      bytes: Buffer.from('png-bytes'),
+      mime: 'image/png',
+      path: '/tmp/2-1.png',
+      sidecarPath: '/tmp/2-1.json',
+    };
+    const gemini = createStubGemini({ responses: new Map() });
+
+    await expect(describeImage({ gemini, image })).rejects.toThrow(/no stub response/i);
+  });
 });
