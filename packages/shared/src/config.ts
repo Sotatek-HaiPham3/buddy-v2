@@ -17,6 +17,7 @@ export const configSchema = z.object({
   GEMINI_VISION_MODEL: z.string().default('gemini-2.5-flash-lite'),
   OPENAI_API_KEY: z.string().min(1).optional(),
   OPENAI_MODEL: z.string().default('gpt-5.4-nano'),
+  OPENAI_VISION_MODEL: z.string().optional(),
   PORT: intStr(3000),
   DATA_DIR: z.string().default('./data'),
   MAX_CONCURRENT_LLM: intStr(10),
@@ -56,6 +57,7 @@ export interface Config {
   geminiVisionModel: string;
   openaiApiKey?: string;
   openaiModel: string;
+  openaiVisionModel: string;
   port: number;
   dataDir: string;
   maxConcurrentLlm: number;
@@ -79,6 +81,7 @@ export function loadConfig(
     geminiModel: parsed.GEMINI_MODEL,
     geminiVisionModel: parsed.GEMINI_VISION_MODEL,
     openaiModel: parsed.OPENAI_MODEL,
+    openaiVisionModel: parsed.OPENAI_VISION_MODEL ?? parsed.OPENAI_MODEL,
     port: parsed.PORT,
     dataDir: parsed.DATA_DIR,
     maxConcurrentLlm: parsed.MAX_CONCURRENT_LLM,

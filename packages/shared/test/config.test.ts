@@ -51,4 +51,14 @@ describe('config', () => {
   it('configSchema is exported for reuse', () => {
     expect(configSchema).toBeDefined();
   });
+
+  it('openaiVisionModel defaults to openaiModel when OPENAI_VISION_MODEL unset', () => {
+    const cfg = loadConfig({ OPENAI_API_KEY: 'k', OPENAI_MODEL: 'gpt-4o' });
+    expect(cfg.openaiVisionModel).toBe('gpt-4o');
+  });
+
+  it('openaiVisionModel uses OPENAI_VISION_MODEL when set', () => {
+    const cfg = loadConfig({ OPENAI_API_KEY: 'k', OPENAI_MODEL: 'gpt-4o-mini', OPENAI_VISION_MODEL: 'gpt-4o' });
+    expect(cfg.openaiVisionModel).toBe('gpt-4o');
+  });
 });
