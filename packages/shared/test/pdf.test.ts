@@ -1,8 +1,11 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { PNG } from 'pngjs';
 import { PDFDocument } from 'pdf-lib';
 import { describe, expect, it } from 'vitest';
 import {
   cropPng,
+  extractAnnotatedText,
   extractEmbeddedImages,
   getPageCount,
   getPageImage,
@@ -34,6 +37,27 @@ describe('pdf wrapper', () => {
     const doc = await openSamplePdf();
     expect(getPageText(doc, 1)).toContain('Page 2');
     expect(getPageText(doc, 2)).toContain('Page 3');
+  });
+
+  it('wraps bold lines with <b> and keeps normal lines untagged', () => {
+    const pdfPath = path.join(__dirname, '..', '..', '..', 'data', 'hscode', 'Chapter07.pdf');
+    if (!fs.existsSync(pdfPath)) return;
+    const doc = openPdf(fs.readFileSync(pdfPath));
+    const annotated = extractAnnotatedText(doc, 0);
+    expect(annotated).toContain('<b>CHIPPING POTATOES</b>');
+    expect(annotated).toContain('<b>0701.90.10</b>');
+    expect(annotated).toContain('Chipping potatoes are tubers');
+    expect(annotated).not.toContain('<b>Chipping potatoes are tubers');
+  });
+
+  it('returns same content set as getPageText with only annotation tags added', () => {
+    const pdfPath = path.join(__dirname, '..', '..', '..', 'data', 'hscode', 'Chapter07.pdf');
+    if (!fs.existsSync(pdfPath)) return;
+    const doc = openPdf(fs.readFileSync(pdfPath));
+    const plain = getPageText(doc, 0);
+    const annotated = extractAnnotatedText(doc, 0);
+    const stripped = annotated.replace(/<\/?b>|<\/?i>/g, '');
+    expect(stripped.replace(/\s+/g, ' ').trim()).toBe(plain.replace(/\s+/g, ' ').trim());
   });
 
   it('renders a page to PNG bytes', async () => {

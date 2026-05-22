@@ -38,6 +38,46 @@ export function getPageText(doc: PdfDoc, pageIndex: number): string {
   return lines.join('\n');
 }
 
+interface StructuredLine {
+  text?: string;
+  font?: {
+    name?: string;
+    weight?: string;
+    style?: string;
+    size?: number;
+  };
+}
+
+interface StructuredBlock {
+  type?: string;
+  lines?: StructuredLine[];
+}
+
+export function extractAnnotatedText(doc: PdfDoc, pageIndex: number): string {
+  assertPageIndex(doc, pageIndex);
+  const page = doc._doc.loadPage(pageIndex);
+  const json = page.toStructuredText('preserve-whitespace').asJSON();
+  const data = JSON.parse(json) as { blocks?: StructuredBlock[] };
+
+  const lines: string[] = [];
+  for (const block of data.blocks ?? []) {
+    for (const line of block.lines ?? []) {
+      const text = (line.text ?? '').trim();
+      if (!text) continue;
+      const fontName = line.font?.name ?? '';
+      const isBold = line.font?.weight === 'bold' || /bold/i.test(fontName);
+      const isItalic = line.font?.style === 'italic' || /italic|oblique/i.test(fontName);
+
+      let wrapped = text;
+      if (isItalic) wrapped = `<i>${wrapped}</i>`;
+      if (isBold) wrapped = `<b>${wrapped}</b>`;
+      lines.push(wrapped);
+    }
+  }
+
+  return lines.join('\n');
+}
+
 export function getPageImage(doc: PdfDoc, pageIndex: number, scale = 1.0): Buffer {
   return renderPage(doc, pageIndex, scale).png;
 }
