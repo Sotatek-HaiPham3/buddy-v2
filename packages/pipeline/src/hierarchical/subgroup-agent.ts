@@ -14,7 +14,7 @@ interface Opts { gemini: GeminiClient; }
 
 export async function subgroupAgent(chunk: Chunk, opts: Opts): Promise<Heading[]> {
   try {
-    const tagged = tagPages(chunk.pages);
+    const tagged = tagPages(chunk.pages, 'annotatedText');
     const r = await opts.gemini.generate([subgroupHeadingsPrompt(tagged)], { maxOutputTokens: 2048 });
     const parsed = subgroupHeadingsResponseSchema.parse(extractJson(r.text));
     return parsed.map((entry) => [entry[0]]);

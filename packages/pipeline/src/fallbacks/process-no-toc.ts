@@ -46,7 +46,7 @@ export async function processNoToc(pages: RawPage[], opts: Opts): Promise<FlatTo
   } else {
     const chunks = chunkPages(pages, opts.chunkTokens);
     for (const c of chunks) {
-      const tagged = tagPages(c.pages);
+      const tagged = tagPages(c.pages, 'annotatedText');
       const r = await opts.gemini.generate([noTocHeadingsPrompt(tagged)], { maxOutputTokens: 8192 });
       const parsed = noTocHeadingsResponseSchema.parse(extractJson(r.text));
       for (const row of parsed) headings.push(headingFromNoTocRow(row));
