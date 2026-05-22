@@ -7,8 +7,8 @@ import type { RawPage } from '../../../src/types.js';
 
 describe('subgroupAgent', () => {
   it('returns [title] tuples from new prompt contract', async () => {
-    const pages: RawPage[] = [{ pageNumber: 5, text: 'x', tokenCount: 0 }];
-    const tagged = tagPages(pages);
+    const pages: RawPage[] = [{ pageNumber: 5, text: 'x', annotatedText: 'x', tokenCount: 0 }];
+    const tagged = tagPages(pages, 'annotatedText');
     const responses = new Map([
       [hashPrompt([subgroupHeadingsPrompt(tagged)]), { text: '[["Intro"], ["Bg"]]' }],
     ]);
@@ -17,8 +17,8 @@ describe('subgroupAgent', () => {
   });
 
   it('coerces legacy tuples to [title]', async () => {
-    const pages: RawPage[] = [{ pageNumber: 5, text: 'x', tokenCount: 0 }];
-    const tagged = tagPages(pages);
+    const pages: RawPage[] = [{ pageNumber: 5, text: 'x', annotatedText: 'x', tokenCount: 0 }];
+    const tagged = tagPages(pages, 'annotatedText');
     const responses = new Map([
       [hashPrompt([subgroupHeadingsPrompt(tagged)]), { text: '[["Intro", 5], ["Bg", null, 7]]' }],
     ]);

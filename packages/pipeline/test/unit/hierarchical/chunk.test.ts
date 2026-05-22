@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { chunkPages } from '../../../src/hierarchical/chunk.js';
 import type { RawPage } from '../../../src/types.js';
 
-const p = (n: number, tokens: number): RawPage => ({ pageNumber: n, text: `p${n}`, tokenCount: tokens });
+const p = (n: number, tokens: number): RawPage => ({ pageNumber: n, text: `p${n}`, annotatedText: `p${n}`, tokenCount: tokens });
 
 describe('chunkPages', () => {
   it('packs pages until tokenBudget hit', () => {

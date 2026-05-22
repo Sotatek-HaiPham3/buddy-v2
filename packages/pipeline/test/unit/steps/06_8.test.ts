@@ -6,7 +6,7 @@ import type { RawPage } from '../../../src/types.js';
 
 describe('checkTitleAtStart', () => {
   it('annotates each entry with appear_start in parallel', async () => {
-    const pages: RawPage[] = [{ pageNumber: 1, text: 'page1text', tokenCount: 0 }];
+    const pages: RawPage[] = [{ pageNumber: 1, text: 'page1text', annotatedText: 'page1text', tokenCount: 0 }];
     const responses = new Map([
       [hashPrompt([titleAtStartPrompt('Intro', 'page1text')]), { text: '{"appear_start":"yes"}' }],
     ]);

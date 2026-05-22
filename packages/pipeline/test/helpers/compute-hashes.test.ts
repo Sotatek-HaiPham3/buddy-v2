@@ -32,10 +32,10 @@ const NO_TOC_PAGE_TEXTS = {
 describe('compute hashes', () => {
   it('small-with-toc hashes', () => {
     const pages: RawPage[] = [
-      { pageNumber: 1, text: PAGE_TEXTS.cover, tokenCount: 10 },
-      { pageNumber: 2, text: PAGE_TEXTS.toc, tokenCount: 10 },
-      { pageNumber: 3, text: PAGE_TEXTS.intro, tokenCount: 10 },
-      { pageNumber: 4, text: PAGE_TEXTS.body, tokenCount: 10 },
+      { pageNumber: 1, text: PAGE_TEXTS.cover, annotatedText: PAGE_TEXTS.cover, tokenCount: 10 },
+      { pageNumber: 2, text: PAGE_TEXTS.toc, annotatedText: PAGE_TEXTS.toc, tokenCount: 10 },
+      { pageNumber: 3, text: PAGE_TEXTS.intro, annotatedText: PAGE_TEXTS.intro, tokenCount: 10 },
+      { pageNumber: 4, text: PAGE_TEXTS.body, annotatedText: PAGE_TEXTS.body, tokenCount: 10 },
     ];
 
     // detectToc prompts for each page
@@ -92,9 +92,9 @@ describe('compute hashes', () => {
 
   it('no-toc hashes', () => {
     const pages: RawPage[] = [
-      { pageNumber: 1, text: NO_TOC_PAGE_TEXTS.cover, tokenCount: 10 },
-      { pageNumber: 2, text: NO_TOC_PAGE_TEXTS.intro, tokenCount: 10 },
-      { pageNumber: 3, text: NO_TOC_PAGE_TEXTS.body, tokenCount: 10 },
+      { pageNumber: 1, text: NO_TOC_PAGE_TEXTS.cover, annotatedText: NO_TOC_PAGE_TEXTS.cover, tokenCount: 10 },
+      { pageNumber: 2, text: NO_TOC_PAGE_TEXTS.intro, annotatedText: NO_TOC_PAGE_TEXTS.intro, tokenCount: 10 },
+      { pageNumber: 3, text: NO_TOC_PAGE_TEXTS.body, annotatedText: NO_TOC_PAGE_TEXTS.body, tokenCount: 10 },
     ];
 
     // detectToc for each page - all return no
@@ -105,7 +105,7 @@ describe('compute hashes', () => {
     }
 
     // noTocHeadings (all pages chunked together)
-    const tagged = tagPages(pages);
+    const tagged = tagPages(pages, 'annotatedText');
     const headingPrompt = noTocHeadingsPrompt(tagged);
     console.log(`noTocHeadings: hash=${hashPrompt([headingPrompt]).slice(0, 12)}`);
   });
@@ -114,10 +114,10 @@ describe('compute hashes', () => {
     // Same as small-with-toc but detect page numbers returns 'no'
     // This routes through processNoToc as well
     const pages: RawPage[] = [
-      { pageNumber: 1, text: PAGE_TEXTS.cover, tokenCount: 10 },
-      { pageNumber: 2, text: PAGE_TEXTS.toc, tokenCount: 10 },
-      { pageNumber: 3, text: PAGE_TEXTS.intro, tokenCount: 10 },
-      { pageNumber: 4, text: PAGE_TEXTS.body, tokenCount: 10 },
+      { pageNumber: 1, text: PAGE_TEXTS.cover, annotatedText: PAGE_TEXTS.cover, tokenCount: 10 },
+      { pageNumber: 2, text: PAGE_TEXTS.toc, annotatedText: PAGE_TEXTS.toc, tokenCount: 10 },
+      { pageNumber: 3, text: PAGE_TEXTS.intro, annotatedText: PAGE_TEXTS.intro, tokenCount: 10 },
+      { pageNumber: 4, text: PAGE_TEXTS.body, annotatedText: PAGE_TEXTS.body, tokenCount: 10 },
     ];
 
     // detectToc - page 2 returns yes, others no
@@ -132,7 +132,7 @@ describe('compute hashes', () => {
     console.log(`toc-no-pn detectPageNumbers: hash=${hashPrompt([pageNumPrompt]).slice(0, 12)}`);
 
     // After 'no', routes to processNoToc -> noTocHeadings
-    const tagged = tagPages(pages);
+    const tagged = tagPages(pages, 'annotatedText');
     const headingPrompt = noTocHeadingsPrompt(tagged);
     console.log(`toc-no-pn noTocHeadings: hash=${hashPrompt([headingPrompt]).slice(0, 12)}`);
   });

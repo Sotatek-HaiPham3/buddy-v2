@@ -20,7 +20,7 @@ describe('runTablePipeline', () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'tblpipe-'));
     const out = await runTablePipeline({
       doc: openPdf(await pdfWithTable()),
-      pages: [{ pageNumber: 1, text: 'x', tokenCount: 0 }],
+      pages: [{ pageNumber: 1, text: 'x', annotatedText: 'x', tokenCount: 0 }],
       dir, gemini: alwaysNormalized as any, pool: createLlmPool(2),
     });
     expect(out).toHaveLength(1);

@@ -13,8 +13,8 @@ describe('addSummaries', () => {
       images: [], tables: [],
     }];
     const pages: RawPage[] = [
-      { pageNumber: 1, text: 'page1', tokenCount: 1 },
-      { pageNumber: 2, text: 'page2', tokenCount: 1 },
+      { pageNumber: 1, text: 'page1', annotatedText: 'page1', tokenCount: 1 },
+      { pageNumber: 2, text: 'page2', annotatedText: 'page2', tokenCount: 1 },
     ];
     const responses = new Map([
       [hashPrompt([summarizeNodePrompt('page1\npage2')]), { text: 'sum-A' }],

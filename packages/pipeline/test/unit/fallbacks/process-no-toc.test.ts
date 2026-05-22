@@ -11,10 +11,10 @@ import type { RawPage } from '../../../src/types.js';
 describe('processNoToc', () => {
   it('LLM emits 2-tuples; resolver derives physical from page-text match', async () => {
     const pages: RawPage[] = [
-      { pageNumber: 1, text: '24\nCHIPPING POTATOES\nbody', tokenCount: 5 },
-      { pageNumber: 2, text: '25\nROUND CABBAGES\nbody', tokenCount: 5 },
+      { pageNumber: 1, text: '24\nCHIPPING POTATOES\nbody', annotatedText: '24\nCHIPPING POTATOES\nbody', tokenCount: 5 },
+      { pageNumber: 2, text: '25\nROUND CABBAGES\nbody', annotatedText: '25\nROUND CABBAGES\nbody', tokenCount: 5 },
     ];
-    const tagged = tagPages(pages);
+    const tagged = tagPages(pages, 'annotatedText');
     const responses = new Map([
       [hashPrompt([noTocHeadingsPrompt(tagged)]), {
         text: JSON.stringify([
@@ -34,9 +34,9 @@ describe('processNoToc', () => {
 
   it('still parses legacy 3-tuple output but resolves pages from text', async () => {
     const pages: RawPage[] = [
-      { pageNumber: 1, text: '1\nINTRO\nbody', tokenCount: 5 },
+      { pageNumber: 1, text: '1\nINTRO\nbody', annotatedText: '1\nINTRO\nbody', tokenCount: 5 },
     ];
-    const tagged = tagPages(pages);
+    const tagged = tagPages(pages, 'annotatedText');
     const responses = new Map([
       [hashPrompt([noTocHeadingsPrompt(tagged)]), { text: JSON.stringify([['1.1', 'INTRO', 99]]) }],
     ]);
@@ -50,9 +50,9 @@ describe('processNoToc', () => {
 
   it('still parses legacy 4-tuple output and ignores tuple page values', async () => {
     const pages: RawPage[] = [
-      { pageNumber: 1, text: 'ANCHOR\nbody', tokenCount: 5 },
+      { pageNumber: 1, text: 'ANCHOR\nbody', annotatedText: 'ANCHOR\nbody', tokenCount: 5 },
     ];
-    const tagged = tagPages(pages);
+    const tagged = tagPages(pages, 'annotatedText');
     const responses = new Map([
       [hashPrompt([noTocHeadingsPrompt(tagged)]), { text: JSON.stringify([['1.1', 'ANCHOR', 50, 99]]) }],
     ]);
@@ -67,10 +67,10 @@ describe('processNoToc', () => {
 
   it('resolves pages for hierarchical output chain', async () => {
     const pages: RawPage[] = [
-      { pageNumber: 1, text: '1\nINTRO', tokenCount: 10 },
-      { pageNumber: 2, text: '2\nBODY', tokenCount: 10 },
+      { pageNumber: 1, text: '1\nINTRO', annotatedText: '1\nINTRO', tokenCount: 10 },
+      { pageNumber: 2, text: '2\nBODY', annotatedText: '2\nBODY', tokenCount: 10 },
     ];
-    const tagged = tagPages(pages);
+    const tagged = tagPages(pages, 'annotatedText');
     const responses = new Map([
       [hashPrompt([subgroupHeadingsPrompt(tagged)]), { text: JSON.stringify([['INTRO'], ['BODY']]) }],
       [hashPrompt([groupMasterPrompt([[['INTRO'], ['BODY']]], undefined)]), { text: JSON.stringify([['1', 'INTRO'], ['2', 'BODY']]) }],

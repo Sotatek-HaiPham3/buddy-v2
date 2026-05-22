@@ -12,7 +12,7 @@ describe('mapPhysical', () => {
       { structure: '2', title: 'Body', page: 5 },
       { structure: '3', title: 'End', page: 10 },
     ];
-    const pages: RawPage[] = [3, 4, 5, 6, 7].map(n => ({ pageNumber: n, text: '', tokenCount: 0 }));
+    const pages: RawPage[] = [3, 4, 5, 6, 7].map(n => ({ pageNumber: n, text: '', annotatedText: '', tokenCount: 0 }));
     const tagged = tagPages(pages);
     const mockResponse = JSON.stringify([
       { structure: '1', title: 'Intro', physical_index: '<physical_index_5>' },

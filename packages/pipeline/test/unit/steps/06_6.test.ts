@@ -5,7 +5,7 @@ import { verifyMappingPrompt } from '../../../src/prompts/verify-mapping.js';
 import { tagPages } from '../../../src/page-tag.js';
 import type { FlatTocEntry, RawPage } from '../../../src/types.js';
 
-const pages: RawPage[] = [1, 2, 3].map(n => ({ pageNumber: n, text: '', tokenCount: 0 }));
+const pages: RawPage[] = [1, 2, 3].map(n => ({ pageNumber: n, text: '', annotatedText: '', tokenCount: 0 }));
 
 describe('verifyAndFix', () => {
   it('reports accuracy 1.0 when all correct', async () => {

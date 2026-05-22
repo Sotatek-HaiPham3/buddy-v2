@@ -6,7 +6,7 @@ import { tagPages } from '../../../src/page-tag.js';
 import type { RawPage } from '../../../src/types.js';
 import type { TreeNode } from '@buddy/shared';
 
-const page = (n: number, tokens = 100): RawPage => ({ pageNumber: n, text: `p${n}`, tokenCount: tokens });
+const page = (n: number, tokens = 100): RawPage => ({ pageNumber: n, text: `p${n}`, annotatedText: `p${n}`, tokenCount: tokens });
 
 describe('splitLargeNodes', () => {
   it('passes through when no node oversized', async () => {

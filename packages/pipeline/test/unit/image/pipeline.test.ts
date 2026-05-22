@@ -49,7 +49,7 @@ describe('runImagePipeline', () => {
     const gemini = createStubGemini({
       responses: new Map([[hashPrompt([...parts]), { text: 'red square' }]]),
     });
-    const pages: RawPage[] = [{ pageNumber: 1, text: 'embedded image page', tokenCount: 3 }];
+    const pages: RawPage[] = [{ pageNumber: 1, text: 'embedded image page', annotatedText: 'embedded image page', tokenCount: 3 }];
 
     const images = await runImagePipeline({
       doc,
@@ -116,7 +116,7 @@ describe('runImagePipeline', () => {
       poolCalls += 1;
       return fn();
     };
-    const pages: RawPage[] = [{ pageNumber: 1, text: '', tokenCount: 0 }];
+    const pages: RawPage[] = [{ pageNumber: 1, text: '', annotatedText: '', tokenCount: 0 }];
 
     const images = await runImagePipeline({
       doc,
@@ -142,7 +142,7 @@ describe('runImagePipeline', () => {
     const pdf = await makeBlankPdf();
     const doc = openPdf(pdf);
     const gemini = createStubGemini({ responses: new Map() });
-    const pages: RawPage[] = [{ pageNumber: 1, text: '', tokenCount: 0 }];
+    const pages: RawPage[] = [{ pageNumber: 1, text: '', annotatedText: '', tokenCount: 0 }];
     const logger = { warn: vi.fn() };
 
     await expect(
@@ -188,7 +188,7 @@ describe('runImagePipeline', () => {
     const pdf = await makeBlankPdf();
     const doc = openPdf(pdf);
     const gemini = createStubGemini({ responses: new Map() });
-    const pages: RawPage[] = [{ pageNumber: 1, text: '', tokenCount: 0 }];
+    const pages: RawPage[] = [{ pageNumber: 1, text: '', annotatedText: '', tokenCount: 0 }];
     const renderSpy = vi.spyOn(shared, 'renderPage').mockImplementation(() => {
       throw new Error('render failed');
     });

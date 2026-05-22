@@ -97,9 +97,11 @@ export async function blankPdfNoText(): Promise<Buffer> {
 
 export async function pdfWithEmbeddedImage(): Promise<Buffer> {
   const pdf = await PDFDocument.create();
+  const font = await pdf.embedFont(StandardFonts.Helvetica);
   const page = pdf.addPage([400, 400]);
   const pngBuf = makeRedPng();
   const img = await pdf.embedPng(pngBuf);
+  page.drawText('Content', { x: 50, y: 220, size: 12, font });
   page.drawImage(img, { x: 50, y: 50, width: 100, height: 100 });
   return Buffer.from(await pdf.save());
 }

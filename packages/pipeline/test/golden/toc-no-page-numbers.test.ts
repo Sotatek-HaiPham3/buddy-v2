@@ -44,10 +44,10 @@ const PAGE_TEXTS = {
 };
 
 const pages: RawPage[] = [
-  { pageNumber: 1, text: PAGE_TEXTS.cover, tokenCount: 10 },
-  { pageNumber: 2, text: PAGE_TEXTS.toc, tokenCount: 10 },
-  { pageNumber: 3, text: PAGE_TEXTS.intro, tokenCount: 10 },
-  { pageNumber: 4, text: PAGE_TEXTS.body, tokenCount: 10 },
+  { pageNumber: 1, text: PAGE_TEXTS.cover, annotatedText: PAGE_TEXTS.cover, tokenCount: 10 },
+  { pageNumber: 2, text: PAGE_TEXTS.toc, annotatedText: PAGE_TEXTS.toc, tokenCount: 10 },
+  { pageNumber: 3, text: PAGE_TEXTS.intro, annotatedText: PAGE_TEXTS.intro, tokenCount: 10 },
+  { pageNumber: 4, text: PAGE_TEXTS.body, annotatedText: PAGE_TEXTS.body, tokenCount: 10 },
 ];
 
 function buildStubs(): Map<string, { text: string }> {
@@ -65,7 +65,7 @@ function buildStubs(): Map<string, { text: string }> {
   });
 
   // Fallback: processNoToc with all 4 pages (HIERARCHICAL_PROCESSING=false → noTocHeadings)
-  const tagged = tagPages(pages);
+  const tagged = tagPages(pages, 'annotatedText');
   stubs.set(hashPrompt([noTocHeadingsPrompt(tagged)]), {
     text: JSON.stringify([
       { structure: '1', title: 'Intro', physical_index: '<physical_index_3>' },

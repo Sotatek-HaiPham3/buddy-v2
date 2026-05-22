@@ -25,7 +25,7 @@ afterEach(async () => { await fs.rm(dataDir, { recursive: true, force: true }); 
 describe('golden: small PDF with embedded image', () => {
   it('produces DocOutput with image attached to deepest node', async () => {
     const pages = await extractPages(pdfPath);
-    const tagged = tagPages(pages);
+    const tagged = tagPages(pages, 'annotatedText');
 
     const stubs = new Map<string, { text: string }>();
 

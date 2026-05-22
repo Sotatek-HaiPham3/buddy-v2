@@ -8,8 +8,8 @@ import type { FlatTocEntry, RawPage } from '../../../src/types.js';
 describe('processTocNoPageNumbers', () => {
   it('finds physical_index for each TOC entry across all pages', async () => {
     const pages: RawPage[] = [
-      { pageNumber: 1, text: 'Intro here', tokenCount: 10 },
-      { pageNumber: 5, text: 'Body here', tokenCount: 10 },
+      { pageNumber: 1, text: 'Intro here', annotatedText: 'Intro here', tokenCount: 10 },
+      { pageNumber: 5, text: 'Body here', annotatedText: 'Body here', tokenCount: 10 },
     ];
     const tagged = tagPages(pages);
     const toc: FlatTocEntry[] = [{ structure: '1', title: 'Intro' }, { structure: '2', title: 'Body' }];

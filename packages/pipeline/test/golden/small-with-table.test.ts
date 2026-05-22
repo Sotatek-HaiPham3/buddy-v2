@@ -25,14 +25,14 @@ afterEach(async () => { await fs.rm(dataDir, { recursive: true, force: true }); 
 describe('golden: small PDF with table', () => {
   it('produces DocOutput with table attached to deepest node', async () => {
     const pages = await extractPages(pdfPath);
-    const tagged = tagPages(pages);
+    const tagged = tagPages(pages, 'annotatedText');
 
     const stubs = new Map<string, { text: string }>();
     for (const p of pages) {
       stubs.set(hashPrompt([detectTocPrompt(p.text)]), { text: '{"toc_detected":"no"}' });
     }
     stubs.set(hashPrompt([noTocHeadingsPrompt(tagged)]), {
-      text: '[{"structure":"1","title":"Products","physical_index":"<physical_index_1>"}]',
+      text: '[{"structure":"1","title":"Product","physical_index":"<physical_index_1>"}]',
     });
 
     const baseGemini = createStubGemini({ responses: stubs });

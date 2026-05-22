@@ -3,9 +3,9 @@ import { normalizeForMatch, resolvePagesForHeadings } from '../../../src/fallbac
 import type { RawPage } from '../../../src/types.js';
 
 const pages: RawPage[] = [
-  { pageNumber: 1, text: '24\nCHIPPING POTATOES\nDetails about potatoes.', tokenCount: 10 },
-  { pageNumber: 2, text: '25\nROUND (DRUMHEAD) CABBAGES\nContent', tokenCount: 5 },
-  { pageNumber: 3, text: '26\nCABBAGE DESCRIPTION\nMore content', tokenCount: 5 },
+  { pageNumber: 1, text: '24\nCHIPPING POTATOES\nDetails about potatoes.', annotatedText: '24\nCHIPPING POTATOES\nDetails about potatoes.', tokenCount: 10 },
+  { pageNumber: 2, text: '25\nROUND (DRUMHEAD) CABBAGES\nContent', annotatedText: '25\nROUND (DRUMHEAD) CABBAGES\nContent', tokenCount: 5 },
+  { pageNumber: 3, text: '26\nCABBAGE DESCRIPTION\nMore content', annotatedText: '26\nCABBAGE DESCRIPTION\nMore content', tokenCount: 5 },
 ];
 
 describe('resolvePagesForHeadings', () => {
@@ -45,7 +45,7 @@ describe('resolvePagesForHeadings', () => {
 
   it('omits page (logical) when matched page has no printed number', () => {
     const pagesWithGap: RawPage[] = [
-      { pageNumber: 1, text: 'SOME HEADING\nbody text', tokenCount: 5 },
+      { pageNumber: 1, text: 'SOME HEADING\nbody text', annotatedText: 'SOME HEADING\nbody text', tokenCount: 5 },
     ];
     const out = resolvePagesForHeadings(
       [{ structure: '1.1', title: 'SOME HEADING' }],
@@ -57,7 +57,7 @@ describe('resolvePagesForHeadings', () => {
 
   it('handles multi-line titles', () => {
     const pagesWithMultiline: RawPage[] = [
-      { pageNumber: 1, text: '50\nROUND (DRUMHEAD)\nCABBAGES\nContent', tokenCount: 7 },
+      { pageNumber: 1, text: '50\nROUND (DRUMHEAD)\nCABBAGES\nContent', annotatedText: '50\nROUND (DRUMHEAD)\nCABBAGES\nContent', tokenCount: 7 },
     ];
     const out = resolvePagesForHeadings(
       [{ structure: '1.1', title: 'ROUND (DRUMHEAD) CABBAGES' }],
@@ -68,8 +68,8 @@ describe('resolvePagesForHeadings', () => {
 
   it('handles duplicate headings (each maps to first occurrence after previous match)', () => {
     const pagesWithDup: RawPage[] = [
-      { pageNumber: 1, text: '1\nCABBAGE\nFirst', tokenCount: 3 },
-      { pageNumber: 2, text: '2\nCABBAGE\nSecond', tokenCount: 3 },
+      { pageNumber: 1, text: '1\nCABBAGE\nFirst', annotatedText: '1\nCABBAGE\nFirst', tokenCount: 3 },
+      { pageNumber: 2, text: '2\nCABBAGE\nSecond', annotatedText: '2\nCABBAGE\nSecond', tokenCount: 3 },
     ];
     const out = resolvePagesForHeadings(
       [
