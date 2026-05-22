@@ -3,6 +3,7 @@ import { resolveVisionModel, type GeminiClient, type LlmPool, type Logger, type 
 export interface RawPage {
   pageNumber: number;
   text: string;
+  annotatedText: string;
   tokenCount: number;
 }
 
