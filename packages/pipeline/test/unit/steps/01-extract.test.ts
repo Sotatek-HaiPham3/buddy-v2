@@ -15,12 +15,15 @@ beforeEach(async () => {
 afterEach(async () => { await fs.rm(path.dirname(pdfPath), { recursive: true, force: true }); });
 
 describe('extractPages', () => {
-  it('returns one entry per page with text + tokenCount', async () => {
+  it('returns one entry per page with text + annotatedText + tokenCount', async () => {
     const pages = await extractPages(pdfPath);
     expect(pages).toHaveLength(2);
     expect(pages[0]?.pageNumber).toBe(1);
     expect(pages[0]?.text).toContain('Hello world');
+    expect(pages[0]?.annotatedText).toContain('Hello world');
+    expect(pages[0]?.annotatedText).not.toContain('<b>');
     expect(pages[0]?.tokenCount).toBeGreaterThan(0);
     expect(pages[1]?.text).toContain('Second page');
+    expect(pages[1]?.annotatedText).toContain('Second page');
   });
 });
