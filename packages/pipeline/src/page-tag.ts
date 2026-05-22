@@ -1,7 +1,7 @@
 import type { RawPage } from './types.js';
 
-export function tagPages(pages: RawPage[]): string {
-  return pages.map(p => `<physical_index_${p.pageNumber}>\n${p.text}\n</physical_index_${p.pageNumber}>`).join('\n');
+export function tagPages(pages: RawPage[], field: 'text' | 'annotatedText' = 'text'): string {
+  return pages.map(p => `<physical_index_${p.pageNumber}>\n${p[field]}\n</physical_index_${p.pageNumber}>`).join('\n');
 }
 
 export function parsePhysicalIndexTag(s: string): number {
