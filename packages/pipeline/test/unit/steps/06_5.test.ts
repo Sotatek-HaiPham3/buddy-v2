@@ -16,7 +16,7 @@ describe('validateIndices', () => {
     expect(out[0]?.physical_index).toBeUndefined();
   });
 
-  it('keeps entries but clears logical when logical sequence regresses', () => {
+  it('keeps entries and keeps logical page even when logical sequence regresses (PageIndex Case 6.5)', () => {
     const out = validateIndices(
       [
         { structure: '1', title: 'A', page: 2, physical_index: 5 },
@@ -26,7 +26,7 @@ describe('validateIndices', () => {
     );
     expect(out).toHaveLength(2);
     expect(out[1]?.physical_index).toBe(14);
-    expect(out[1]?.page).toBeUndefined();
+    expect(out[1]?.page).toBe(1);   // KEPT, not stripped
   });
 
   it('leaves logical untouched when sequence is monotonic', () => {
@@ -71,7 +71,9 @@ describe('validateIndices', () => {
     expect(out[0]?.page).toBeUndefined();
   });
 
-  it('clears physical_index when sequence regresses', () => {
+  it('preserves physical_index even when sequence regresses (PageIndex Case 6.5)', () => {
+    // LLM may emit headings in semantic-hierarchy order, not physical order.
+    // PageIndex spec validates ONLY range, not monotonicity.
     const entries: FlatTocEntry[] = [
       { structure: '1', title: 'A', physical_index: 5 },
       { structure: '2', title: 'B', physical_index: 87 },   // within range but skips way ahead
@@ -81,17 +83,68 @@ describe('validateIndices', () => {
     expect(out).toHaveLength(3);
     expect(out[0]?.physical_index).toBe(5);
     expect(out[1]?.physical_index).toBe(87);
-    expect(out[2]?.physical_index).toBeUndefined();   // dropped due to regression
+    expect(out[2]?.physical_index).toBe(2);   // KEPT, not stripped
   });
 
-  it('clears physical_index when out of range AND drops regression separately', () => {
+  it('clears physical_index when out of range; regression elsewhere in same batch is irrelevant', () => {
     const entries: FlatTocEntry[] = [
       { structure: '1', title: 'A', physical_index: 5 },
       { structure: '2', title: 'B', physical_index: 87 },   // out of pageCount=10 range → drop
-      { structure: '3', title: 'C', physical_index: 7 },    // 7 > 5, monotonic
+      { structure: '3', title: 'C', physical_index: 7 },    // 7 > 5, valid range
     ];
     const out = validateIndices(entries, 10);
     expect(out[1]?.physical_index).toBeUndefined();   // out of range
-    expect(out[2]?.physical_index).toBe(7);           // accepted; lastPhysical=5 because 87 was dropped, not 87
+    expect(out[2]?.physical_index).toBe(7);           // accepted (no monotonicity check)
+  });
+
+  it('KEEPS physical_index even when it regresses vs previous entries', () => {
+    // LLM may emit headings in semantic-hierarchy order, not physical order.
+    // PageIndex spec validates ONLY range, not monotonicity.
+    const entries: FlatTocEntry[] = [
+      { structure: '1.1', title: 'A', physical_index: 5 },
+      { structure: '1.2', title: 'B', physical_index: 8 },
+      { structure: '1.3', title: 'C', physical_index: 3 },   // regresses 8 -> 3
+    ];
+    const out = validateIndices(entries, 10);
+    expect(out).toHaveLength(3);
+    expect(out[0]?.physical_index).toBe(5);
+    expect(out[1]?.physical_index).toBe(8);
+    expect(out[2]?.physical_index).toBe(3);   // KEPT, not stripped
+  });
+
+  it('KEEPS logical page even when it regresses', () => {
+    const entries: FlatTocEntry[] = [
+      { structure: '1.1', title: 'A', page: 24, physical_index: 1 },
+      { structure: '1.2', title: 'B', page: 30, physical_index: 2 },
+      { structure: '1.3', title: 'C', page: 25, physical_index: 3 },   // regresses 30 -> 25
+    ];
+    const out = validateIndices(entries, 10);
+    expect(out[2]?.page).toBe(25);   // KEPT, not stripped
+  });
+
+  it('still strips physical_index when out of pageCount range', () => {
+    // PageIndex Case 6.5 — single rule that survives.
+    const entries: FlatTocEntry[] = [
+      { structure: '1.1', title: 'A', physical_index: 99 },
+    ];
+    const out = validateIndices(entries, 10);
+    expect(out[0]?.physical_index).toBeUndefined();
+  });
+
+  it('still strips page when < 1', () => {
+    const entries: FlatTocEntry[] = [
+      { structure: '1.1', title: 'A', page: 0, physical_index: 1 },
+    ];
+    const out = validateIndices(entries, 10);
+    expect(out[0]?.page).toBeUndefined();
+  });
+
+  it('does NOT strip page when > pageCount (logical can exceed physical pageCount)', () => {
+    // Already covered by an earlier plan; assert here as regression guard.
+    const entries: FlatTocEntry[] = [
+      { structure: '1.1', title: 'A', page: 99, physical_index: 1 },
+    ];
+    const out = validateIndices(entries, 10);
+    expect(out[0]?.page).toBe(99);
   });
 });
