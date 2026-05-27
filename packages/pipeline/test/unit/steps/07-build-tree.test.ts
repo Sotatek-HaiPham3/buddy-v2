@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { validateIndices } from '../../../src/steps/06_5-validate-indices.js';
 import { buildTree } from '../../../src/steps/07-build-tree.js';
 import type { FlatTocEntry } from '../../../src/types.js';
 
@@ -136,5 +137,50 @@ describe('buildTree — doc_page propagation', () => {
     const tree = buildTree(toc, 20);
     expect(tree[0].logical_start).toBe(1);
     expect(tree[0].logical_end).toBeUndefined();
+  });
+});
+
+describe('buildTree — integration with validateIndices (PageIndex Case 6.5 + Case 33)', () => {
+  function collectTitles(nodes: { title: string; nodes?: unknown[] }[]): string[] {
+    const out: string[] = [];
+    for (const n of nodes) {
+      out.push(n.title);
+      if (n.nodes && n.nodes.length > 0) {
+        out.push(...collectTitles(n.nodes as { title: string; nodes?: unknown[] }[]));
+      }
+    }
+    return out;
+  }
+
+  it('after validate + buildTree: out-of-order LLM entries land in physical order in the tree', () => {
+    // LLM emitted in semantic order; physical sort in buildTree puts them right.
+    const entries: FlatTocEntry[] = [
+      { structure: '1.1', title: 'First',  physical_index: 5 },
+      { structure: '1.2', title: 'Second', physical_index: 8 },
+      { structure: '1.3', title: 'Third',  physical_index: 3 },   // out of order
+    ];
+    const validated = validateIndices(entries, 10);   // no strip — all in range
+    expect(validated[2]?.physical_index).toBe(3);     // confirm validate kept it
+    const tree = buildTree(validated, 10);
+    const allTitles = collectTitles(tree);
+    expect(allTitles).toEqual(expect.arrayContaining(['First', 'Second', 'Third']));
+    // Physical sort: Third(3) < First(5) < Second(8)
+    expect(tree[0]?.start_index).toBe(3);
+  });
+
+  it('orphaned deep entries become root nodes when parent has no physical_index (Case 33)', () => {
+    // Parent has no physical_index (resolver couldn't anchor it) → validateIndices leaves it without
+    // physical_index → buildTree filters it → child becomes orphan root.
+    const entries: FlatTocEntry[] = [
+      { structure: '1',   title: 'Chapter',  /* no physical_index — resolver miss */ },
+      { structure: '1.1', title: 'SubA',     physical_index: 2 },
+      { structure: '1.2', title: 'SubB',     physical_index: 5 },
+    ];
+    const validated = validateIndices(entries, 10);
+    const tree = buildTree(validated, 10);
+    // Parent filtered out; children become orphan roots
+    const allTitles = collectTitles(tree);
+    expect(allTitles).toEqual(expect.arrayContaining(['SubA', 'SubB']));
+    expect(allTitles).not.toContain('Chapter');
   });
 });
