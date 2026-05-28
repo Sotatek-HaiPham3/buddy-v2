@@ -41,15 +41,21 @@ export const docSelectorPrompt = (
   historySummary: string,
 ): string => {
   const lines = docs.map((d) => {
-    const topTitles = d.structure.slice(0, 8).map((n) => `- ${n.title}`).join('\n');
+    const titlesAndSummaries = collectTitlesWithSummaries(
+      d.structure,
+      DEFAULT_MAX_DEPTH,
+      DEFAULT_MAX_LINES_PER_DOC,
+    ).join('\n');
     return `doc_id: ${d.doc_id}
 doc_name: ${d.doc_name}
 description: ${d.doc_description}
-top-level titles:
-${topTitles}`;
+structure (titles + summaries, up to ${DEFAULT_MAX_DEPTH + 1} levels):
+${titlesAndSummaries}`;
   });
 
   return `You are routing a user question to the right document(s).
+
+Use BOTH the description AND the structure listing to decide. The structure shows nested titles and per-section summaries when available - these reveal what each document actually contains beyond the chapter title.
 
 Available documents:
 
