@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createStubGemini, hashPrompt, type DocOutput } from '@buddy/shared';
 import { selectDocs } from '../src/doc-selector.js';
-import { docSelectorPrompt } from '../src/prompts/doc-selector.js';
+import { collectTitlesWithSummaries, docSelectorPrompt } from '../src/prompts/doc-selector.js';
+import type { TreeNode } from '@buddy/shared';
 
 const doc: DocOutput = {
   doc_id: 'd1',
@@ -9,6 +10,17 @@ const doc: DocOutput = {
   doc_description: 'finance',
   structure: [{ title: 'Q3', start_index: 1, end_index: 1, node_id: 'n1', nodes: [], images: [], tables: [] }],
 };
+
+const node = (title: string, summary?: string, nodes: TreeNode[] = []): TreeNode => ({
+  title,
+  start_index: 1,
+  end_index: 1,
+  node_id: title.toLowerCase().replace(/\s+/g, '-'),
+  nodes,
+  images: [],
+  tables: [],
+  ...(summary ? { summary } : {}),
+});
 
 describe('selectDocs', () => {
   it('uses llm for multi-doc topics', async () => {
@@ -43,5 +55,50 @@ describe('selectDocs', () => {
     });
 
     expect(logs.some((l) => l.msg === 'LLM usage')).toBe(true);
+  });
+});
+
+describe('collectTitlesWithSummaries', () => {
+  it('emits indented titles and includes summaries when present', () => {
+    const tree: TreeNode[] = [
+      node('CHAPTER 2', undefined, [
+        node('0207.14.91'),
+        node(
+          'MECHANICALLY DEBONED OR SEPARATED MEAT',
+          'The document explains mechanically deboned or separated meat as a paste-like product.',
+        ),
+        node('FREEZE-DRIED DICED CHICKEN', 'Cubed chicken preserved by freezing and vacuum drying.'),
+      ]),
+    ];
+    const out = collectTitlesWithSummaries(tree, 2, 30);
+    const text = out.join('\n');
+    expect(text).toContain('- CHAPTER 2');
+    expect(text).toContain('- MECHANICALLY DEBONED OR SEPARATED MEAT');
+    expect(text).toContain('paste-like product');
+    expect(text).toContain('FREEZE-DRIED DICED CHICKEN');
+    expect(text).toContain('vacuum drying');
+  });
+
+  it('respects maxDepth and does not descend past depth limit', () => {
+    const deep: TreeNode[] = [node('A', undefined, [node('A.1', undefined, [node('A.1.1')])])];
+    const out = collectTitlesWithSummaries(deep, 1, 30);
+    const text = out.join('\n');
+    expect(text).toContain('- A');
+    expect(text).toContain('- A.1');
+    expect(text).not.toContain('A.1.1');
+  });
+
+  it('caps output at maxLines and emits more marker', () => {
+    const many: TreeNode[] = [];
+    for (let i = 0; i < 50; i++) many.push(node('item-' + i));
+    const out = collectTitlesWithSummaries(many, 2, 10);
+    expect(out.length).toBeLessThanOrEqual(11);
+    expect(out[out.length - 1]).toMatch(/more/);
+  });
+
+  it('omits summary line when node has no summary', () => {
+    const tree: TreeNode[] = [node('A')];
+    const out = collectTitlesWithSummaries(tree, 1, 30);
+    expect(out).toEqual(['- A']);
   });
 });

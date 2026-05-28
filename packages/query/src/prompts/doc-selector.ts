@@ -1,4 +1,39 @@
-import type { DocOutput } from '@buddy/shared';
+import type { DocOutput, TreeNode } from '@buddy/shared';
+
+const DEFAULT_MAX_DEPTH = 2;
+const DEFAULT_MAX_LINES_PER_DOC = 30;
+
+export function collectTitlesWithSummaries(nodes: TreeNode[], maxDepth: number, maxLines: number): string[] {
+  const out: string[] = [];
+  let hitLimit = false;
+
+  function pushLine(line: string): boolean {
+    if (out.length >= maxLines) {
+      hitLimit = true;
+      return false;
+    }
+    out.push(line);
+    return true;
+  }
+
+  function walk(node: TreeNode, depth: number): boolean {
+    const indent = '  '.repeat(depth);
+    if (!pushLine(`${indent}- ${node.title}`)) return false;
+    if (node.summary && !pushLine(`${indent}    ${node.summary}`)) return false;
+    if (depth >= maxDepth) return true;
+    for (const child of node.nodes) {
+      if (!walk(child, depth + 1)) return false;
+    }
+    return true;
+  }
+
+  for (const root of nodes) {
+    if (!walk(root, 0)) break;
+  }
+
+  if (hitLimit) out.push('... (more nodes not shown)');
+  return out;
+}
 
 export const docSelectorPrompt = (
   docs: DocOutput[],
