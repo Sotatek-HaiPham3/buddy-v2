@@ -102,3 +102,35 @@ describe('collectTitlesWithSummaries', () => {
     expect(out).toEqual(['- A']);
   });
 });
+
+describe('docSelectorPrompt shape', () => {
+  const mk = (id: string, name: string, structure: TreeNode[]): DocOutput => ({
+    doc_id: id,
+    doc_name: name,
+    doc_description: 'desc',
+    structure,
+  });
+
+  it('includes nested titles (depth 2) for each doc', () => {
+    const docs: DocOutput[] = [
+      mk('d1', 'Doc.pdf', [node('CHAPTER 1', undefined, [node('MECHANICALLY DEBONED MEAT')])]),
+    ];
+    const prompt = docSelectorPrompt(docs, 'q', '');
+    expect(prompt).toContain('MECHANICALLY DEBONED MEAT');
+  });
+
+  it('includes node summaries when present', () => {
+    const docs: DocOutput[] = [
+      mk('d1', 'Doc.pdf', [node('CHAPTER 1', undefined, [node('A topic', 'A useful summary that mentions deboning.')])]),
+    ];
+    const prompt = docSelectorPrompt(docs, 'q', '');
+    expect(prompt).toContain('A useful summary that mentions deboning.');
+  });
+
+  it('shows doc_description and structure together', () => {
+    const docs: DocOutput[] = [mk('d1', 'Doc.pdf', [node('A')])];
+    const prompt = docSelectorPrompt(docs, 'q', '');
+    expect(prompt).toContain('description: desc');
+    expect(prompt).toContain('structure (titles + summaries');
+  });
+});
