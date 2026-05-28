@@ -436,3 +436,7 @@ git commit -m "chore(plan): doc-selector summaries plan"
   - The "(more nodes not shown)" line is intentionally generic. Don't try to count exactly how many were skipped — depth-first traversal makes that fiddly and the LLM doesn't care about the exact number.
   - When the helper's `out.length >= maxLines` check fires mid-walk, do NOT push the truncation marker inside the recursion. Push it once at the top level after walks complete.
   - DO NOT touch `tree-reasoner.ts` prompt. That one is correct already.
+
+## Execution Status
+
+- 2026-05-29: Executed tasks 0->5 on `main` from commit `84dc9c9`. Implemented helper + prompt update + tests, verified smoke query routes to `chapter02` after rebuilding `@buddy/query` and restarting serve. No tree rebuild performed.
